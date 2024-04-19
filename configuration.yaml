@@ -1,0 +1,57 @@
+####Start#######################################################################
+# Loads default set of integrations. Do not remove.
+default_config:
+#external_url: "https://6eyp8kgkzcr9zrikgp4974ogtbmcc89t.ui.nabu.casa"
+################################################################################
+logger:
+  default: warn
+  # logs:
+notify:
+  - name: Emhass
+    platform: file
+    filename: www/log_files/emhass_log.txt
+    timestamp: true
+#################
+homeassistant:
+  allowlist_external_dirs:
+    - "/config"
+    # - "/home/user/.homeassistant/"
+  ##################
+  #  customize:
+  #   sensor.daily_yield_battery_kwh_2:
+  #    state_class: total_increasing
+  #   device_class: energy
+  packages:
+    huawei_solar_pees: !include packages/huawei_solar_pees.yaml
+    huawei_solar_pees_input: !include packages/huawei_solar_pees_input.yaml
+    huawei_solar_data: !include packages/huawei_solar_data.yaml # egen
+    elpris_tibber_nordpool: !include packages/elpris_tibber_nordpool.yaml # egen
+    ev_doge_cost: !include packages/cost/ev_doge_cost.yaml # egen
+    openhasp: !include packages/plate1.yaml #egen
+    #emhass: !include packages/emhass.yaml #egen
+################
+swedish_calendar:
+  calendar_config:
+    days_before_today: 7
+    days_after_today: 31
+    include:
+      - eve
+      - holiday
+################################################################################
+frontend:
+  themes: !include_dir_merge_named themes
+####include#####################################################################
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+group: !include groups.yaml
+sensor: !include sensor.yaml
+binary_sensor: !include binary_sensor.yaml
+recorder: !include recorder.yaml
+logbook: !include logbook.yaml
+history: !include history.yaml
+device_tracker: !include devicetracker.yaml
+shell_command: !include shell_commands.yaml
+rest_command: !include rest_command.yaml
+template: !include forecast.yaml
+####End#########################################################################
