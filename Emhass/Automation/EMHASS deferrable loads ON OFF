@@ -1,0 +1,151 @@
+alias: EMHASS deferrable loads ON OFF
+description: ""
+trigger:
+  - platform: numeric_state
+    entity_id:
+      - sensor.p_deferrable0
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
+    above: 10
+    id: Def0 load +
+  - platform: state
+    entity_id:
+      - sensor.p_deferrable0
+    id: Def0_load0
+    enabled: true
+    to: "0"
+  - platform: numeric_state
+    entity_id:
+      - sensor.warm_water_1_top
+    below: 47
+    alias: "> 55"
+    id: 55+
+  - platform: state
+    entity_id:
+      - sensor.p_deferrable1
+    id: Def1_load0
+    enabled: false
+    to: "0"
+  - platform: numeric_state
+    entity_id:
+      - sensor.p_deferrable1
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
+    above: 10
+    id: Def1 load +
+    enabled: false
+condition: []
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id:
+              - Def0 load +
+          - condition: numeric_state
+            entity_id: sensor.p_deferrable0
+            enabled: true
+            above: 50
+          - condition: numeric_state
+            entity_id: sensor.warm_water_1_top
+            below: 50
+            enabled: true
+        sequence:
+          - service: notify.mobile_app_iphone13pro
+            metadata: {}
+            data:
+              title: VVB
+              message: VVB ON !
+            enabled: true
+          - alias: Unblock VVB
+            service: climate.set_temperature
+            target:
+              entity_id:
+                - climate.external_control
+            data:
+              temperature: 0
+            enabled: true
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 10
+              milliseconds: 0
+          - alias: Extra Warm water ON
+            service: climate.set_temperature
+            target:
+              entity_id:
+                - climate.extra_warm_water_stat
+            data:
+              temperature: 1
+            enabled: false
+        alias: Trigger Deferreble0 ON
+      - conditions:
+          - condition: trigger
+            id:
+              - Def0_load0
+        sequence:
+          - service: notify.mobile_app_iphone13pro
+            metadata: {}
+            data:
+              title: VVB
+              message: VVB OFF !
+            enabled: true
+          - alias: Block VVB
+            service: climate.set_temperature
+            target:
+              entity_id:
+                - climate.external_control
+            data:
+              temperature: 1
+          - alias: Extra Warm water OFF
+            service: climate.set_temperature
+            target:
+              entity_id:
+                - climate.extra_warm_water_stat
+            data:
+              temperature: 0
+        alias: Trigger Deferreble0 OFF
+      - conditions:
+          - condition: trigger
+            id:
+              - 55+
+        sequence:
+          - alias: Extra Warm water OFF
+            service: climate.set_temperature
+            target:
+              entity_id:
+                - climate.extra_warm_water_stat
+            data:
+              temperature: 0
+          - alias: Block VVB
+            service: climate.set_temperature
+            target:
+              entity_id:
+                - climate.external_control
+            data:
+              temperature: 1
+          - service: notify.mobile_app_iphone13pro
+            metadata: {}
+            data:
+              message: VVB Klar 55 grader
+        alias: Trigger Deferreble0 55 + OFF
+      - conditions:
+          - condition: trigger
+            id:
+              - Def1 load +
+          - condition: numeric_state
+            entity_id: sensor.p_deferrable1
+            enabled: true
+            above: 50
+        sequence: []
+        alias: "Trigger Deferreble1 ON "
+      - conditions:
+          - condition: trigger
+            id:
+              - Def1_load0
+        sequence: []
+        alias: Trigger Deferreble1 OFF
+mode: single
