@@ -1,0 +1,46 @@
+alias: EMHASS (STOP) FDC FC V2
+description: ...
+trigger:
+  - platform: state
+    entity_id:
+      - sensor.p_batt_forecast
+    to: "0"
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
+    enabled: true
+  - platform: time_pattern
+    minutes: /2
+    enabled: false
+  - platform: state
+    entity_id:
+      - sensor.soc_comparison
+    to: Lika
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 3
+    enabled: true
+condition:
+  - condition: numeric_state
+    entity_id: sensor.p_batt_forecast
+    below: 1
+    above: -1
+    enabled: false
+  - condition: state
+    entity_id: sensor.soc_comparison
+    state: Lika
+action:
+  - service: huawei_solar.stop_forcible_charge
+    data:
+      device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+  - service: number.set_value
+    data:
+      value: "0"
+    target:
+      entity_id:
+        - number.battery_maximum_charging_power
+        - number.battery_maximum_discharging_power
+mode: queued
+max: 2
