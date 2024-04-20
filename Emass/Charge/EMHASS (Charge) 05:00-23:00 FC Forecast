@@ -1,0 +1,49 @@
+alias: EMHASS (Charge) 05:00-23:00 FC Forecast
+description: ""
+trigger:
+  - platform: state
+    entity_id:
+      - sensor.soc_batt_forecast
+    enabled: true
+  - platform: time_pattern
+    minutes: /5
+    enabled: true
+condition:
+  - condition: time
+    after: "05:00:00"
+    before: "23:00:00"
+  - condition: numeric_state
+    entity_id: sensor.p_batt_forecast
+    below: -5
+    enabled: true
+action:
+  - service: huawei_solar.forcible_charge_soc
+    data:
+      target_soc: "{{ max(min(states('sensor.soc_batt_forecast') | int(0), 100), 12) }}"
+      power: "{{ (states('sensor.limited_power') | int(0) | abs)}}"
+      device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+    enabled: true
+    alias: "Forcible charge to SOC, Limited power "
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 3
+      milliseconds: 0
+  - service: number.set_value
+    metadata: {}
+    data:
+      value: "0"
+    target:
+      entity_id:
+        - number.battery_maximum_discharging_power
+    alias: Number set to 0W discharging power
+  - service: number.set_value
+    metadata: {}
+    data:
+      value: "{{ (states('sensor.limited_power') | int(0) | abs) }}"
+    target:
+      entity_id: number.battery_maximum_charging_power
+    enabled: true
+    alias: Number set to limited power
+mode: queued
+max: 2
