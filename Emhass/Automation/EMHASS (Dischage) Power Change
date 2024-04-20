@@ -1,0 +1,35 @@
+alias: EMHASS (Dischage) Power Change
+description: ...
+trigger:
+  - platform: state
+    entity_id:
+      - sensor.p_batt_forecast
+    enabled: true
+  - platform: time_pattern
+    minutes: /6
+    enabled: false
+condition:
+  - condition: numeric_state
+    entity_id: sensor.p_batt_forecast
+    above: 5
+    enabled: true
+action:
+  - service: number.set_value
+    metadata: {}
+    data:
+      value: >-
+        {{ states('sensor.p_batt_forecast')|int(0)|abs +
+        states('input_number.power_plus')|int(0) }}
+    target:
+      entity_id:
+        - number.battery_maximum_discharging_power
+    enabled: true
+    alias: Battery Maximum discharging power set value Forecast + power plus
+  - service: number.set_value
+    data:
+      value: "0"
+    target:
+      entity_id: number.battery_maximum_charging_power
+    alias: " Battery Maximum charging power 0W"
+mode: queued
+max: 2
