@@ -1,0 +1,146 @@
+alias: EMHASS Script + reboot + start + fifo buffer
+description: ""
+trigger:
+  - platform: time
+    at: "13:57:00"
+    id: "13:57"
+  - platform: time
+    at: "06:10:00"
+    id: "06:10"
+  - platform: time
+    at: "23:00:00"
+    id: "23:00"
+  - platform: time_pattern
+    minutes: /5
+    id: /5 min
+  - platform: time_pattern
+    minutes: /30
+    id: /30 min
+  - platform: homeassistant
+    event: start
+    id: HA Start
+  - platform: state
+    entity_id:
+      - update.emhass_update
+    to: "off"
+    for:
+      hours: 0
+      minutes: 10
+      seconds: 0
+    id: Up-To-Date
+  - platform: state
+    entity_id:
+      - update.emhass_update
+    to: "off"
+    for:
+      hours: 0
+      minutes: 10
+      seconds: 0
+    id: Up-To-Date
+  - platform: time_pattern
+    minutes: /16
+    id: /11 min
+condition: []
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id:
+              - "06:10"
+        sequence:
+          - service: shell_command.ml_forecast_model_fit
+            data: {}
+          - service: shell_command.ml_forecast_model_tune
+            metadata: {}
+            data: {}
+        alias: 06:10 Forecast model fit + tune
+      - conditions:
+          - condition: trigger
+            id:
+              - "13:57"
+              - "23:00"
+        sequence:
+          - service: shell_command.dayahead_optim
+            data: {}
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 5
+              milliseconds: 0
+          - service: shell_command.publish_data
+            metadata: {}
+            data: {}
+        alias: 13:57 / 23:00 shell_command.dayahead_optim
+      - conditions:
+          - condition: trigger
+            id:
+              - /11 min
+          - condition: trigger
+            id:
+              - /5 min
+            enabled: false
+        sequence:
+          - service: shell_command.post_naive_mpc_shell_v1
+            data: {}
+          - service: shell_command.post_naive_mpc_shell_v2
+            metadata: {}
+            data: {}
+            enabled: false
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 5
+              milliseconds: 0
+          - service: shell_command.publish_data
+            metadata: {}
+            data: {}
+        alias: /5 or /11 min shell_command.post_naive_mpc_shell
+      - conditions:
+          - condition: trigger
+            id:
+              - /30 min
+            alias: Fi_fo_buffer
+        sequence:
+          - service: input_text.set_value
+            target:
+              entity_id: input_text.fi_fo_buffer
+            data:
+              value: >
+                {{ (states('input_text.fi_fo_buffer').split(', ')[1:48]  + [
+                (states('sensor.power_load_no_var_loads')|float(0)/1000)|round(1)])
+                |join(', ') }}
+      - conditions:
+          - condition: trigger
+            id:
+              - HA Start
+              - Up-To-Date
+        sequence:
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 30
+              milliseconds: 0
+          - service: shell_command.post_naive_mpc_shell
+            metadata: {}
+            data: {}
+          - service: shell_command.dayahead_optim
+            metadata: {}
+            data: {}
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 5
+              milliseconds: 0
+          - service: notify.mobile_app_iphone13pro
+            metadata: {}
+            data:
+              message: >-
+                Home assistant restarted or the EMHASS add-on was updated and
+                the optimization task was automatically relaunched
+              title: EMHASS relaunched optimization
+          - service: shell_command.publish_data
+            metadata: {}
+            data: {}
+        alias: EMHASS Relaunch tasks after HASS restart
+mode: parallel
+max: 3
