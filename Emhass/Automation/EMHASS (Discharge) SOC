@@ -1,0 +1,80 @@
+alias: EMHASS (Discharge) SOC
+description: ...
+trigger:
+  - platform: state
+    entity_id:
+      - sensor.soc_batt_forecast
+    enabled: true
+    id: SOC Forecast changes
+  - platform: time_pattern
+    minutes: /5
+    enabled: true
+condition:
+  - condition: numeric_state
+    entity_id: sensor.p_batt_forecast
+    above: 50
+    enabled: true
+action:
+  - service: script.emhass_discharge_soc_change
+    metadata: {}
+    data: {}
+    enabled: false
+  - alias: "If SOC lower than 12% then FDC 120 min "
+    if:
+      - condition: numeric_state
+        entity_id: sensor.soc_batt_forecast
+        below: 12
+    then:
+      - if:
+          - condition: state
+            entity_id: input_select.discharge_mode
+            state: Limited power
+        then:
+          - service: huawei_solar.forcible_discharge
+            metadata: {}
+            data:
+              duration: 120
+              power: "{{ (states('sensor.limited_power') | int(0) | abs)}}"
+              device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+            alias: FDC + Limited power
+            enabled: true
+        else:
+          - service: huawei_solar.forcible_discharge
+            metadata: {}
+            data:
+              duration: 120
+              power: >-
+                {{ states('sensor.p_batt_forecast')|int(0)|abs +
+                states('input_number.power_plus')|int(0) }}
+              device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+            alias: FDC + power plus
+            enabled: true
+    else:
+      - if:
+          - condition: state
+            entity_id: input_select.discharge_mode
+            state: Limited power
+        then:
+          - service: huawei_solar.forcible_discharge_soc
+            data:
+              target_soc: >-
+                {% set value = states('sensor.soc_batt_forecast') | int(0) %} {{
+                value if value >= 12 else 12 }}
+              power: "{{ (states('sensor.limited_power') | int(0) | abs)}}"
+              device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+            enabled: true
+            alias: huawei_solar.forcible_discharge_soc Limited power
+        else:
+          - service: huawei_solar.forcible_discharge_soc
+            data:
+              target_soc: >-
+                {% set value = states('sensor.soc_batt_forecast') | int(0) %} {{
+                value if value >= 12 else 12 }}
+              power: >-
+                {{ states('sensor.p_batt_forecast')|int(0)|abs +
+                states('input_number.power_plus')|int(0) }}
+              device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+            enabled: true
+            alias: huawei_solar.forcible_discharge_soc Forecast + power plus
+mode: queued
+max: 2
