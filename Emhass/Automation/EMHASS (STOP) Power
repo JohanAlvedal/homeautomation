@@ -1,0 +1,75 @@
+alias: EMHASS (STOP) Power
+description: ...
+trigger:
+  - platform: time_pattern
+    minutes: /5
+    enabled: true
+  - platform: state
+    entity_id:
+      - sensor.soc_comparison
+    to: Lika
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 3
+  - platform: state
+    entity_id:
+      - sensor.p_batt_forecast
+    to: "0"
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
+    enabled: true
+condition:
+  - condition: state
+    entity_id: sensor.soc_comparison
+    state: Lika
+  - condition: state
+    entity_id: sensor.p_batt_forecast
+    state: "0.00"
+  - condition: or
+    conditions:
+      - condition: numeric_state
+        entity_id: number.battery_maximum_charging_power
+        above: 100
+      - condition: numeric_state
+        entity_id: number.battery_maximum_discharging_power
+        above: 100
+action:
+  - if:
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: number.battery_maximum_discharging_power
+            state: "0"
+    then:
+      - service: number.set_value
+        data:
+          value: "0"
+        target:
+          entity_id:
+            - number.battery_maximum_discharging_power
+        enabled: true
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 5
+      milliseconds: 0
+    enabled: true
+  - if:
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: number.battery_maximum_charging_power
+            state: "0"
+    then:
+      - service: number.set_value
+        data:
+          value: "0"
+        target:
+          entity_id:
+            - number.battery_maximum_charging_power
+        enabled: true
+mode: parallel
+max: 2
