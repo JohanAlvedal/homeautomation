@@ -3,7 +3,7 @@
 # HUAWEI SOLAR DATA - Power, Energy and Economy Sensors
 # -----------------------------------------------------
 #
-# This is a package file with the sensors included in Huawei Solar
+# This is a package file with the sensors included in Huawei Solar by Johan71
 #
 ################################################################################
 sensor:
@@ -15,17 +15,14 @@ sensor:
         friendly_name: "Battery Charge Only"
         unit_of_measurement: "W"
         device_class: power
-        #state_class: measurement  # Du kan aktivera detta om det stöds i din version av Home Assistant
         value_template: "{{ max(0, states('sensor.battery_charge_discharge_power') | float(0)) }}"
-        # Sensor som rapporterar urladdningskraften för batteriet
+      # Sensor som rapporterar urladdningskraften för batteriet
       battery_discharge_only:
         friendly_name: "Battery Discharge Only"
         unit_of_measurement: "W"
-        #state_class: total_increasing
         device_class: power
-        #state_class: measurement  # Du kan aktivera detta om det stöds i din version av Home Assistant
         value_template: "{{ -min(0, states('sensor.battery_charge_discharge_power') | float(0)) }}"
-      ####Inverter bräkningar
+      #Inverter bräkningar
       input_power_with_efficiency_loss:
         friendly_name: "Input Power with Efficiency Loss"
         unique_id: "input_power_with_efficiency_loss"
@@ -41,7 +38,7 @@ sensor:
           {% else %}
             {{ inpower * 0.98 }}
           {% endif %}
-      #### Energy PV
+      # Energy PV
       energy_pv:
         friendly_name: "PV Energy"
         unique_id: "PV_Energy"
@@ -62,7 +59,8 @@ sensor:
           {% set battery_day_discharge = states('sensor.battery_day_discharge') | float(default=0) %}
           {% set battery_day_charge = states('sensor.battery_day_charge') | float(default=0) %}
           {{ inverter_daily_yield - battery_day_discharge + battery_day_charge }}
-      #### Extra template sensors rör dem inte ####
+      # Extra template sensors rör dem inte
+      # Grid to battery
       grid_to_battery:
         unique_id: grid_to_battery
         device_class: power
@@ -72,6 +70,7 @@ sensor:
           {% if inv < 0 %} {{ 0 - inv | int }}
           {% else %} 0
           {% endif %}
+      # Grid to house
       grid_to_house:
         unique_id: grid_to_house
         device_class: power
@@ -85,6 +84,7 @@ sensor:
             {% endif %}
           {% else %} 0
           {% endif %}
+      # Solar to battery
       solar_to_battery:
         unique_id: solar_to_battery
         device_class: power
@@ -99,6 +99,7 @@ sensor:
             {% endif %}
           {% else %} 0
           {% endif %}
+      # Solar to house
       solar_to_house:
         unique_id: solar_to_house
         device_class: power
@@ -119,7 +120,7 @@ sensor:
             {% endif %}
           {% else %} 0
           {% endif %}
-      #### sensor.battery_charge_only
+      # Solar to grid
       solar_to_grid:
         unique_id: solar_to_grid
         device_class: power
@@ -130,6 +131,7 @@ sensor:
           {% if out > 0 and grid > 0 %} {{ grid }}
           {% else %} 0
           {% endif %}
+      # Battery to grid
       battery_to_grid:
         unique_id: battery_to_grid
         device_class: power
@@ -144,6 +146,7 @@ sensor:
             {% endif %}
           {% else %} 0
           {% endif %}
+      # Battery to house
       battery_to_house:
         unique_id: battery_to_house
         device_class: power
@@ -154,7 +157,7 @@ sensor:
           {% if bat < 0 %} {{ togrid - bat | int }}
           {% else %} 0
           {% endif %}
-      #### Batteristatus om charge idle or discharge ####
+      # Batteristatus om charge idle or discharge
       battery_status:
         friendly_name: "Battery Status"
         value_template: >
@@ -166,7 +169,7 @@ sensor:
           {% else %}
             Idle
           {% endif %}
-      #### Husets elförbrukning från Grid #### Data till EMHASS #####
+      # Husets elförbrukning från Grid #### Data till EMHASS #####
       house_power_from_grid_w:
         unique_id: house_power_from_grid_w
         friendly_name: "Husets Elförbrukning från Nätet"
@@ -189,13 +192,10 @@ sensor:
           {% set inverters_power = states('sensor.inverter_active_power') | float(default=0) %}
           {% set power_meter_power = states('sensor.power_meter_active_power') | float(default=0) %}
           {{ max(0, (inverters_power - power_meter_power)) }}
-      ############ Solar power that huse consumes
+      # Solar power that huse consumes
       solar_power_consumed:
         friendly_name: Solar power consumed
         unique_id: "solar_power_consumed"
-#        device_class: power
-#        state_class: measurement
-#        icon: mdi:solar-power-variant-outline
         unit_of_measurement: "W"
         value_template: >
           {% set house_power = states('sensor.house_power_consumption') | float(default=0) %}
@@ -208,4 +208,5 @@ sensor:
         availability_template: >
           {{ states('sensor.house_power_consumption') | is_number
           and states('sensor.inverter_input_power') | is_number }}
+
 #### End #######################################################################
