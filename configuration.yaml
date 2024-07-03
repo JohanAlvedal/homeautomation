@@ -1,82 +1,40 @@
-####Start#######################################################################
+#### Start #####################################################################
 # Loads default set of integrations. Do not remove.
 default_config:
 #external_url: "https://6eyp8kgkzcr9zrikgp4974ogtbmcc89t.ui.nabu.casa"
-################################################################################
+##
 logger:
   default: warn
   # logs:
-#### EMHASS #######################
+## EMHASS 
 notify:
   - platform: file
     name: heating_hours_prediction
     timestamp: false
     filename: /share/heating_prediction.csv
-#################
+## HA
 homeassistant:
   allowlist_external_dirs:
     - "/config"
     - "/share"
-  ####################################
+## CUSTOMIZE
 #   customize:
     # sensor.compr_cons_hotwat:
     #   state_class: total_increasing
     #   unit_of_measurement: kWh
     #   device_class: energy
-    # sensor.compr_cons_heating:
-    #   state_class: total_increasing
-    #   unit_of_measurement: kWh
-    #   device_class: energy
-    # sensor.compr_starts:
-    #   state_class: total_increasing
-    #   unit_of_measurement: kWh
-    #   device_class: energy
-    # sensor.compr_consump_tot:
-    #   state_class: total_increasing
-    #   unit_of_measurement: kWh
-    #   device_class: energy
-    # sensor.aux_cons_heating:
-    #   state_class: total_increasing
-    #   unit_of_measurement: kWh
-    #   device_class: energy
-    # sensor.aux_cons_hot_water:
-    #   state_class: total_increasing
-    #   unit_of_measurement: kWh
-    #   device_class: energy
-    # sensor.vvb_daily_reimansum_day:
-    #   state_class: total_increasing
-    #   unit_of_measurement: kWh
-    #   device_class: energy
-    # sensor.heat_daily_reimansum_day:
-    #   state_class: total_increasing
-    #   unit_of_measurement: kWh
-    #   device_class: energy 
-####################################
-
+## PACKAGES
   packages:
-    huawei_solar_pees: !include packages/huawei_solar_pees.yaml
-    # huawei_solar_pees_input: !include packages/huawei_solar_pees_input.yaml
     huawei_solar_data: !include packages/huawei_solar_data.yaml # egen
     elpris_tibber_nordpool: !include packages/elpris_tibber_nordpool.yaml # egen
-    ev_doge_cost: !include packages/cost/ev_doge_cost.yaml # egen
     lightning: !include packages/lightning.yaml
-
+    emhass: !include packages/emhass.yaml #egen
+    emhass_heat: !include packages/emhass_heating.yaml #egen
     # openhasp: !include packages/plate1.yaml #egen
-    # emhass: !include packages/emhass.yaml #egen
-    # emhass_heat: !include packages/emhass_heating.yaml #egen
-
-################
-swedish_calendar:
-  calendar_config:
-    days_before_today: 7
-    days_after_today: 31
-    include:
-      - eve
-      - holiday
-################################################################################
+###
 frontend:
   themes: !include_dir_merge_named themes
-####include#####################################################################
+#### include ###################################################################
 automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml
@@ -90,5 +48,4 @@ device_tracker: !include devicetracker.yaml
 shell_command: !include shell_commands.yaml
 rest_command: !include rest_command.yaml
 template: !include forecast.yaml
-#customize: !include customize.yaml
-####End#########################################################################
+#### End #######################################################################
