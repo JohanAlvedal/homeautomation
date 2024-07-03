@@ -15,7 +15,7 @@ trigger:
     id: Battery Power Forecast changes
   - platform: time_pattern
     minutes: /15
-    id: 5 min
+    id: 15 min
     enabled: true
   - platform: state
     entity_id:
@@ -34,7 +34,7 @@ action:
             id:
               - Battery SOC Forecast changes
               - Battery Power Forecast changes
-              - 5 min
+              - 15 min
           - condition: time
             after: "05:00:00"
             before: "23:00:00"
@@ -45,34 +45,27 @@ action:
                 below: -100
                 enabled: true
             then:
-              - service: script.emhass_charge_05_00_23_00_fc_forecast
-                data: {}
-                enabled: false
-              - alias: Power plus
+              - alias: Battery Power Forecast
                 if:
                   - condition: state
                     entity_id: input_select.charge_mode
-                    state: Forecast + power plus
+                    state: Battery Power Forecast
                 then:
                   - service: huawei_solar.forcible_charge
                     metadata: {}
                     data:
                       duration: 120
-                      power: >-
-                        {{ states('sensor.p_batt_forecast')|int(0)|abs +
-                        states('input_number.power_plus')|int(0) }}
+                      power: "{{ (states('sensor.p_batt_forecast') | int(0) | abs) }}"
                       device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
-                    alias: FC + power plus
-                  - service: number.set_value
+                    alias: Battery Power Forecast
+                  - alias: Number set to Battery Power Forecast
+                    service: number.set_value
                     metadata: {}
                     data:
-                      value: >-
-                        {{ states('sensor.p_batt_forecast')|int(0)|abs +
-                        states('input_number.power_plus')|int(0) }}
+                      value: "{{ (states('sensor.p_batt_forecast') | int(0) | abs) }}"
                     target:
                       entity_id: number.battery_maximum_charging_power
                     enabled: true
-                    alias: Number set to Power plus
                 enabled: true
               - alias: Limited power
                 if:
@@ -125,7 +118,7 @@ action:
             id:
               - Battery SOC Forecast changes
               - Battery Power Forecast changes
-              - 5 min
+              - 15 min
           - condition: time
             after: "23:00:00"
             before: "05:00:00"
@@ -147,14 +140,12 @@ action:
               entity_id: number.battery_maximum_charging_power
             enabled: true
             alias: Maximum charging power 4500W
-          - service: script.emhass_charge_fc_forecast_23_05
-            data: {}
-            enabled: false
         alias: 23:00-05:00
       - conditions:
           - condition: trigger
             id:
               - Limited power
+              - 15 min
           - condition: state
             entity_id: input_select.charge_mode
             state: Limited power
@@ -171,18 +162,19 @@ action:
           - condition: trigger
             id:
               - Battery Power Forecast changes
+              - 15 min
           - condition: state
             entity_id: input_select.charge_mode
-            state: Forecast + power plus
+            state: Battery Power Forecast
         sequence:
           - service: number.set_value
             metadata: {}
             data:
-              value: "{{ (states('sensor.limited_power') | int(0) | abs) }}"
+              value: "{{ (states('sensor.p_batt_forecast') | int(0) | abs) }}"
             target:
               entity_id: number.battery_maximum_charging_power
             enabled: true
-            alias: Number set to Power forecast
+            alias: Number set to Battery Power Forecast
     default:
       - service: number.set_value
         metadata: {}
