@@ -20,7 +20,7 @@ trigger:
       seconds: 5
     enabled: true
   - platform: time_pattern
-    minutes: /5
+    minutes: /3
     enabled: true
 condition:
   - condition: state
@@ -38,31 +38,8 @@ condition:
         entity_id: number.battery_maximum_discharging_power
         above: 100
 action:
-  - service: script.emhass_stpo_fc_fdc
-    metadata: {}
-    data: {}
-    enabled: false
   - service: huawei_solar.stop_forcible_charge
     data:
       device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
-  - service: number.set_value
-    data:
-      value: "0"
-    target:
-      entity_id:
-        - number.battery_maximum_charging_power
-    enabled: false
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 5
-      milliseconds: 0
-  - service: number.set_value
-    data:
-      value: "0"
-    target:
-      entity_id:
-        - number.battery_maximum_discharging_power
-    enabled: false
 mode: parallel
 max: 2
