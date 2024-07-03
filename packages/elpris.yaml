@@ -1,0 +1,468 @@
+################################################################################
+#                Detta är till för elpriserna                                  #
+################################################################################
+sensor:
+  - platform: rest
+    name: Tibber prices
+    resource: https://api.tibber.com/v1-beta/gql
+    method: POST
+    scan_interval: 60
+    payload: '{ "query": "{ viewer { homes { currentSubscription { priceInfo { today { total startsAt } tomorrow { total startsAt }}}}}}" }'
+    json_attributes_path: "$.data.viewer.homes[0].currentSubscription.priceInfo"
+    json_attributes:
+      - today
+      - tomorrow
+    value_template: Ok
+    headers:
+      Authorization: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+      Content-Type: application/json
+      User-Agent: REST
+
+  - platform: template
+    sensors:
+      peak_el_pris:
+        unit_of_measurement: "Sek/kWh"
+        friendly_name: "Peak elpris"
+        value_template: "{{ state_attr('sensor.nordpool_kwh_se3_sek_3_10_025', 'peak') }}"
+        unique_id: peak_el_pris
+
+      offpeak_el_pris:
+        unit_of_measurement: "Sek/kWh"
+        friendly_name: "Offpeak elpris"
+        value_template: "{{ state_attr('sensor.nordpool_kwh_se3_sek_3_10_025', 'off_peak_1') }}"
+        unique_id: offpeak_el_pris
+
+      text_el_pris:
+        friendly_name: "Text elpris"
+        value_template: "{{ state_attr('sensor.electricity_price_goktytan_4', 'price_level') }}"
+
+      electricity_consumption_price_24h_forecast:
+        friendly_name: "Electricity consumption price 24h forecast"
+        value_template: >-
+          {% set data = state_attr('sensor.nordpool_tibber', 'raw_today') | map(attribute='value') | list %}
+          {% set values = namespace(all=[]) %}
+          {% for i in range(now().hour+1, data | length) %}
+            {% set v = ((0.011 + (0.001 * (data[i] | float(0)) * 10) * 1.06 + 0.01582 * 1.06 + 0.0538613 + 0.0020417 + 0.0503288) | round(4)) %}
+            {% set values.all = values.all + [v] %}
+          {% endfor %}
+          {% set data = state_attr('sensor.nordpool_tibber', 'raw_tomorrow') | map(attribute='value') | list %}
+          {% for i in range(data | length) %}
+            {% set v = ((0.011 + (0.001 * (data[i] | float(0)) * 10) * 1.06 + 0.01582 * 1.06 + 0.0538613 + 0.0020417 + 0.0503288) | round(4)) %}
+            {% set values.all = values.all + [v] %}
+          {% endfor %}
+          {{ values.all[:24] }}
+
+      electricity_production_price_24h_forecast:
+        friendly_name: "Electricity production price 24h forecast"
+        value_template: >-
+          {% set data = state_attr('sensor.nordpool_tibber', 'raw_today') | map(attribute='value') | list %}
+          {% set values = namespace(all=[]) %}
+          {% for i in range(now().hour+1, data | length) %}
+            {% set v = ((-0.00905 + (0.001 * (data[i] | float(0)) * 10)) | round(4)) %}
+            {% set values.all = values.all + [v] %}
+          {% endfor %}
+          {% set data = state_attr('sensor.nordpool_tibber', 'raw_tomorrow') | map(attribute='value') | list %}
+          {% for i in range(data | length) %}
+            {% set v = ((-0.00905 + (0.001 * (data[i] | float(0)) * 10)) | round(4)) %}
+            {% set values.all = values.all + [v] %}
+          {% endfor %}
+          {{ values.all[:24] }}
+
+      electricity_consumption_price_15min_forecast:
+        friendly_name: "Electricity consumption price 15min forecast"
+        value_template: >-
+          {% set data = state_attr('sensor.nordpool_tibber', 'raw_today') | map(attribute='value') | list %}
+          {% set values = namespace(all=[]) %}
+          {% for i in range(now().hour+1, data | length) %}
+            {% set v = ((0.011 + (0.001 * (data[i] | float(0)) * 10) * 1.06 + 0.01582 * 1.06 + 0.0538613 + 0.0020417 + 0.0503288) | round(4)) %}
+            {% set values.all = values.all + [v] %}
+          {% endfor %}
+          {% set data = state_attr('sensor.nordpool_tibber', 'raw_tomorrow') | map(attribute='value') | list %}
+          {% for i in range(data | length) %}
+            {% set v = ((0.011 + (0.001 * (data[i] | float(0)) * 10) * 1.06 + 0.01582 * 1.06 + 0.0538613 + 0.0020417 + 0.0503288) | round(4)) %}
+            {% set values.all = values.all + [v] %}
+          {% endfor %}
+          {% set values_15min = namespace(all=[]) %}
+          {% for v in values.all %}
+            {% set values_15min.all = values_15min.all + [v, v, v, v] %}
+          {% endfor %}
+          {{ values_15min.all[:96] }}
+
+
+      electricity_production_price_15min_forecast:
+        friendly_name: "Electricity production price 15min forecast"
+        value_template: >-
+          {% set data = state_attr('sensor.nordpool_tibber', 'raw_today') | map(attribute='value') | list %}
+          {% set values = namespace(all=[]) %}
+          {% for i in range(now().hour+1, data | length) %}
+            {% set v = ((-0.00905 + (0.001 * (data[i] | float(0)) * 10)) | round(4)) %}
+            {% set values.all = values.all + [v] %}
+          {% endfor %}
+          {% set data = state_attr('sensor.nordpool_tibber', 'raw_tomorrow') | map(attribute='value') | list %}
+          {% for i in range(data | length) %}
+            {% set v = ((-0.00905 + (0.001 * (data[i] | float(0)) * 10)) | round(4)) %}
+            {% set values.all = values.all + [v] %}
+          {% endfor %}
+          {% set values_15min = namespace(all=[]) %}
+          {% for v in values.all %}
+            {% set values_15min.all = values_15min.all + [v, v, v, v] %}
+          {% endfor %}
+          {{ values_15min.all[:96] }}
+
+
+      electricity_consumption_price_30min_forecast:
+        friendly_name: "Electricity consumption price 30min forecast"
+        value_template: >-
+          {% set data = state_attr('sensor.nordpool_tibber', 'raw_today') | map(attribute='value') | list %}
+          {% set values = namespace(all=[]) %}
+          {% for i in range(now().hour+1, data | length) %}
+            {% set v = ((0.011 + (0.001 * (data[i] | float(0)) * 10) * 1.06 + 0.01582 * 1.06 + 0.0538613 + 0.0020417 + 0.0503288) | round(4)) %}
+            {% set values.all = values.all + [v] %}
+          {% endfor %}
+          {% set data = state_attr('sensor.nordpool_tibber', 'raw_tomorrow') | map(attribute='value') | list %}
+          {% for i in range(data | length) %}
+            {% set v = ((0.011 + (0.001 * (data[i] | float(0)) * 10) * 1.06 + 0.01582 * 1.06 + 0.0538613 + 0.0020417 + 0.0503288) | round(4)) %}
+            {% set values.all = values.all + [v] %}
+          {% endfor %}
+          {% set values_30min = namespace(all=[]) %}
+          {% for v in values.all %}
+            {% set values_30min.all = values_30min.all + [v, v] %}
+          {% endfor %}
+          {{ values_30min.all[:48] }}
+
+      electricity_production_price_30min_forecast:
+        friendly_name: "Electricity production price 30min forecast"
+        value_template: >-
+          {% set data = state_attr('sensor.nordpool_tibber', 'raw_today') | map(attribute='value') | list %}
+          {% set values = namespace(all=[]) %}
+          {% for i in range(now().hour+1, data | length) %}
+            {% set v = ((-0.00905 + (0.001 * (data[i] | float(0)) * 10)) | round(4)) %}
+            {% set values.all = values.all + [v] %}
+          {% endfor %}
+          {% set data = state_attr('sensor.nordpool_tibber', 'raw_tomorrow') | map(attribute='value') | list %}
+          {% for i in range(data | length) %}
+            {% set v = ((-0.00905 + (0.001 * (data[i] | float(0)) * 10)) | round(4)) %}
+            {% set values.all = values.all + [v] %}
+          {% endfor %}
+          {% set values_30min = namespace(all=[]) %}
+          {% for v in values.all %}
+            {% set values_30min.all = values_30min.all + [v, v] %}
+          {% endfor %}
+          {{ values_30min.all[:48] }}
+
+
+# ################################################################################
+# #                Detta är till för elpriserna                                  #
+# ################################################################################
+# sensor:
+#   - platform: rest
+#     name: Tibber prices
+#     resource: https://api.tibber.com/v1-beta/gql
+#     method: POST
+#     scan_interval: 60
+#     payload: '{ "query": "{ viewer { homes { currentSubscription { priceInfo { today { total startsAt } tomorrow { total startsAt }}}}}}" }'
+#     json_attributes_path: "$.data.viewer.homes[0].currentSubscription.priceInfo"
+#     json_attributes:
+#       - today
+#       - tomorrow
+#     value_template: Ok
+#     headers:
+#       Authorization: "228d305b78a81fcd5441995a20a5160c599f49b29e0b806154d5a66e86e49e1c"
+#       Content-Type: application/json
+#       User-Agent: REST
+
+#   - platform: template
+#     sensors:
+#       peak_el_pris:
+#         unit_of_measurement: "Sek/kWh"
+#         friendly_name: "Peak elpris"
+#         value_template: "{{ state_attr('sensor.nordpool_kwh_se3_sek_3_10_025', 'peak') }}"
+#         unique_id: peak_el_pris
+
+#       offpeak_el_pris:
+#         unit_of_measurement: "Sek/kWh"
+#         friendly_name: "Offpeak elpris"
+#         value_template: "{{ state_attr('sensor.nordpool_kwh_se3_sek_3_10_025', 'off_peak_1') }}"
+#         unique_id: offpeak_el_pris
+
+#       text_el_pris:
+#         friendly_name: "Text elpris"
+#         value_template: "{{ state_attr('sensor.electricity_price_goktytan_4', 'price_level') }}"
+        
+#   - platform: template
+#     sensors:
+#       electricity_consumption_price_24h_forecast:
+#         friendly_name: "Electricity consumption price 24h forecast"
+#         value_template: >-
+#           {% set data = state_attr('sensor.nordpool_tibber', 'raw_today') | map(attribute='value') | list %}
+#           {% set values = namespace(all=[]) %}
+#           {% for i in range(now().hour+1,data | length) %}
+#             {% set v = ((0.011 + (0.001*(data[i] | float(0))*10)*1.06 + 0.01582*1.06 + 0.0538613 + 0.0020417 + 0.0503288) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %}
+#           {% endfor %}
+#           {% set data = state_attr('sensor.nordpool_tibber', 'raw_tomorrow') | map(attribute='value') | list %}
+#           {% for i in range(data | length) %}
+#             {% set v = ((0.011 + (0.001*(data[i] | float(0))*10)*1.06 + 0.01582*1.06 + 0.0538613 + 0.0020417 + 0.0503288) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %}
+#           {% endfor %} {{ (values.all)[:24] }}
+
+#   - platform: template
+#     sensors:
+#       electricity_production_price_24h_forecast:
+#         friendly_name: "Electricity production price 24h forecast"
+#         value_template: >-
+#           {% set data = state_attr('sensor.nordpool_tibber', 'raw_today') | map(attribute='value') | list %}
+#           {% set values = namespace(all=[]) %}
+#           {% for i in range(now().hour+1,data | length) %}
+#             {% set v = ((-0.00905 + (0.001*(data[i] | float(0))*10)) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %}
+#           {% endfor %}
+#           {% set data = state_attr('sensor.nordpool_tibber', 'raw_tomorrow') | map(attribute='value') | list %}
+#           {% for i in range(data | length) %}
+#             {% set v = ((-0.00905 + (0.001*(data[i] | float(0))*10)) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %} 
+#           {% endfor %} {{ (values.all)[:24] }}
+
+#   - platform: template
+#     sensors:
+#       electricity_consumption_price_15min_forecast:
+#         friendly_name: "Electricity consumption price 15min forecast"
+#         value_template: >-
+#           {% set data = state_attr('sensor.nordpool_tibber', 'raw_today') | map(attribute='value') | list %}
+#           {% set values = namespace(all=[]) %}
+#           {% for i in range(now().hour+1,data | length) %}
+#             {% set v = ((0.011 + (0.001*(data[i] | float(0))*10)*1.06 + 0.01582*1.06 + 0.0538613 + 0.0020417 + 0.0503288) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %}
+#           {% endfor %}
+#           {% set data = state_attr('sensor.nordpool_tibber', 'raw_tomorrow') | map(attribute='value') | list %}
+#           {% for i in range(data | length) %}
+#             {% set v = ((0.011 + (0.001*(data[i] | float(0))*10)*1.06 + 0.01582*1.06 + 0.0538613 + 0.0020417 + 0.0503288) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %}
+#           {% endfor %}
+#           {% set values_15min = namespace(all=[]) %}
+#           {% for v in values.all %}
+#             {% set values_15min.all = values_15min.all + [v, v, v, v] %}
+#           {% endfor %}
+#           {{ values_15min.all[:96] }}
+
+#   - platform: template
+#     sensors:
+#       electricity_production_price_15min_forecast:
+#         friendly_name: "Electricity production price 15min forecast"
+#         value_template: >-
+#           {% set data = state_attr('sensor.nordpool_tibber', 'raw_today') | map(attribute='value') | list %}
+#           {% set values = namespace(all=[]) %}
+#           {% for i in range(now().hour+1,data | length) %}
+#             {% set v = ((-0.00905 + (0.001*(data[i] | float(0))*10)) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %}
+#           {% endfor %}
+#           {% set data = state_attr('sensor.nordpool_tibber', 'raw_tomorrow') | map(attribute='value') | list %}
+#           {% for i in range(data | length) %}
+#             {% set v = ((-0.00905 + (0.001*(data[i] | float(0))*10)) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %}
+#           {% endfor %}
+#           {% set values_15min = namespace(all=[]) %}
+#           {% for v in values.all %}
+#             {% set values_15min.all = values_15min.all + [v, v, v, v] %}
+#           {% endfor %}
+#           {{ values_15min.all[:96] }}
+
+#   - platform: template
+#     sensors:
+#       electricity_consumption_price_30min_forecast:
+#         friendly_name: "Electricity consumption price 30min forecast"
+#         value_template: >-
+#           {% set data = state_attr('sensor.nordpool_tibber', 'raw_today') | map(attribute='value') | list %}
+#           {% set values = namespace(all=[]) %}
+#           {% for i in range(now().hour+1,data | length) %}
+#             {% set v = ((0.011 + (0.001*(data[i] | float(0))*10)*1.06 + 0.01582*1.06 + 0.0538613 + 0.0020417 + 0.0503288) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %}
+#           {% endfor %}
+#           {% set data = state_attr('sensor.nordpool_tibber', 'raw_tomorrow') | map(attribute='value') | list %}
+#           {% for i in range(data | length) %}
+#             {% set v = ((0.011 + (0.001*(data[i] | float(0))*10)*1.06 + 0.01582*1.06 + 0.0538613 + 0.0020417 + 0.0503288) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %}
+#           {% endfor %}
+#           {% set values_30min = namespace(all=[]) %}
+#           {% for v in values.all %}
+#             {% set values_30min.all = values_30min.all + [v, v] %}
+#           {% endfor %}
+#           {{ values_30min.all[:48] }}
+
+#   - platform: template
+#     sensors:
+#       electricity_production_price_30min_forecast:
+#         friendly_name: "Electricity production price 30min forecast"
+#         value_template: >-
+#           {% set data = state_attr('sensor.nordpool_tibber', 'raw_today') | map(attribute='value') | list %}
+#           {% set values = namespace(all=[]) %}
+#           {% for i in range(now().hour+1,data | length) %}
+#             {% set v = ((-0.00905 + (0.001*(data[i] | float(0))*10)) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %}
+#           {% endfor %}
+#           {% set data = state_attr('sensor.nordpool_tibber', 'raw_tomorrow') | map(attribute='value') | list %}
+#           {% for i in range(data | length) %}
+#             {% set v = ((-0.00905 + (0.001*(data[i] | float(0))*10)) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %}
+#           {% endfor %}
+#           {% set values_30min = namespace(all=[]) %}
+#           {% for v in values.all %}
+#             {% set values_30min.all = values_30min.all + [v, v] %}
+#           {% endfor %}
+#           {{ values_30min.all[:48] }}
+
+#       electricity_consumption_price_24h_forecast:
+#         friendly_name: "Electricity consumption price 24h forecast"
+#         value_template: >-
+#           {% set data = state_attr('sensor.nordpool', 'raw_today') | map(attribute='value') | list %}
+#           {% set values = namespace(all=[]) %}
+#           {% for i in range(now().hour+1,data | length) %}
+#             {% set v = ((0.011 + (0.001*(data[i] | float(0))*10)*1.06 + 0.01582*1.06 + 0.0538613 + 0.0020417 + 0.0503288) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %}
+#           {% endfor %}
+#           {% set data = state_attr('sensor.nordpool', 'raw_tomorrow') | map(attribute='value') | list %}
+#           {% for i in range(data | length) %}
+#             {% set v = ((0.011 + (0.001*(data[i] | float(0))*10)*1.06 + 0.01582*1.06 + 0.0538613 + 0.0020417 + 0.0503288) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %}
+#           {% endfor %} {{ (values.all)[:24] }}
+
+#   - platform: template
+#     sensors:
+#       electricity_production_price_24h_forecast:
+#         friendly_name: "Electricity production price 24h forecast"
+#         value_template: >-
+#           {% set data = state_attr('sensor.nordpool', 'raw_today') | map(attribute='value') | list %}
+#           {% set values = namespace(all=[]) %}
+#           {% for i in range(now().hour+1,data | length) %}
+#             {% set v = ((-0.00905 + (0.001*(data[i] | float(0))*10)) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %}
+#           {% endfor %}
+#           {% set data = state_attr('sensor.nordpool', 'raw_tomorrow') | map(attribute='value') | list %}
+#           {% for i in range(data | length) %}
+#             {% set v = ((-0.00905 + (0.001*(data[i] | float(0))*10)) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %} 
+#           {% endfor %} {{ (values.all)[:24] }}
+
+#   - platform: template
+#     sensors:
+#       electricity_consumption_price_15min_forecast:
+#         friendly_name: "Electricity consumption price 15min forecast"
+#         value_template: >-
+#           {% set data = state_attr('sensor.nordpool', 'raw_today') | map(attribute='value') | list %}
+#           {% set values = namespace(all=[]) %}
+#           {% for i in range(now().hour+1,data | length) %}
+#             {% set v = ((0.011 + (0.001*(data[i] | float(0))*10)*1.06 + 0.01582*1.06 + 0.0538613 + 0.0020417 + 0.0503288) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %}
+#           {% endfor %}
+#           {% set data = state_attr('sensor.nordpool', 'raw_tomorrow') | map(attribute='value') | list %}
+#           {% for i in range(data | length) %}
+#             {% set v = ((0.011 + (0.001*(data[i] | float(0))*10)*1.06 + 0.01582*1.06 + 0.0538613 + 0.0020417 + 0.0503288) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %}
+#           {% endfor %}
+#           {% set values_15min = namespace(all=[]) %}
+#           {% for v in values.all %}
+#             {% set values_15min.all = values_15min.all + [v, v, v, v] %}
+#           {% endfor %}
+#           {{ values_15min.all[:96] }}
+
+#     electricity_production_price_15min_forecast:
+#       friendly_name: "Electricity production price 15min forecast"
+#       value_template: >-
+#         {% set data = state_attr('sensor.nordpool', 'raw_today') | map(attribute='value') | list %}
+#         {% set values = namespace(all=[]) %}
+#         {% for i in range(now().hour+1,data | length) %}
+#           {% set v = ((-0.00905 + (0.001*(data[i] | float(0))*10)) | round(4)) %}
+#           {% set values.all = values.all + [ v ] %}
+#         {% endfor %}
+#         {% set data = state_attr('sensor.nordpool', 'raw_tomorrow') | map(attribute='value') | list %}
+#         {% for i in range(data | length) %}
+#           {% set v = ((-0.00905 + (0.001*(data[i] | float(0))*10)) | round(4)) %}
+#           {% set values.all = values.all + [ v ] %}
+#         {% endfor %}
+#         {% set values_15min = namespace(all=[]) %}
+#         {% for v in values.all %}
+#           {% set values_15min.all = values_15min.all + [v, v, v, v] %}
+#         {% endfor %}
+#         {{ values_15min.all[:96] }}
+
+#   - platform: template
+#     sensors:
+#       electricity_consumption_price_30min_forecast:
+#         friendly_name: "Electricity consumption price 30min forecast"
+#         value_template: >-
+#           {% set data = state_attr('sensor.nordpool', 'raw_today') | map(attribute='value') | list %}
+#           {% set values = namespace(all=[]) %}
+#           {% for i in range(now().hour+1,data | length) %}
+#             {% set v = ((0.011 + (0.001*(data[i] | float(0))*10)*1.06 + 0.01582*1.06 + 0.0538613 + 0.0020417 + 0.0503288) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %}
+#           {% endfor %}
+#           {% set data = state_attr('sensor.nordpool', 'raw_tomorrow') | map(attribute='value') | list %}
+#           {% for i in range(data | length) %}
+#             {% set v = ((0.011 + (0.001*(data[i] | float(0))*10)*1.06 + 0.01582*1.06 + 0.0538613 + 0.0020417 + 0.0503288) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %}
+#           {% endfor %}
+#           {% set values_30min = namespace(all=[]) %}
+#           {% for v in values.all %}
+#             {% set values_30min.all = values_30min.all + [v, v] %}
+#           {% endfor %}
+#           {{ values_30min.all[:48] }}
+
+#   - platform: template
+#     sensors:
+#       electricity_production_price_30min_forecast:
+#         friendly_name: "Electricity production price 30min forecast"
+#         value_template: >-
+#           {% set data = state_attr('sensor.nordpool', 'raw_today') | map(attribute='value') | list %}
+#           {% set values = namespace(all=[]) %}
+#           {% for i in range(now().hour+1,data | length) %}
+#             {% set v = ((-0.00905 + (0.001*(data[i] | float(0))*10)) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %}
+#           {% endfor %}
+#           {% set data = state_attr('sensor.nordpool', 'raw_tomorrow') | map(attribute='value') | list %}
+#           {% for i in range(data | length) %}
+#             {% set v = ((-0.00905 + (0.001*(data[i] | float(0))*10)) | round(4)) %}
+#             {% set values.all = values.all + [ v ] %}
+#           {% endfor %}
+#           {% set values_30min = namespace(all=[]) %}
+#           {% for v in values.all %}
+#             {% set values_30min.all = values_30min.all + [v, v] %}
+#           {% endfor %}
+#           {{ values_30min.all[:48] }}
+
+input_number:
+  elpris_eon_energiersattning_per_kwh:
+    name: "Elpris eon nätnytta kwh"
+    initial: 0
+    min: 0
+    max: 5
+    step: 0.10
+    mode: box
+    unit_of_measurement: "Sek"
+
+  elpris_skatteaterbaring_per_kwh:
+    name: "Elpris skatteaterbaring per kwh"
+    initial: 0
+    min: 0
+    max: 5
+    step: 0.10
+    mode: box
+    unit_of_measurement: "Sek"
+
+  elpris_tibber_paslag_per_kwh_ink_moms:
+    name: "Elpris tibber påslag per kwh ink moms"
+    initial: 0
+    min: 0
+    max: 5
+    step: 0.10
+    mode: box
+    unit_of_measurement: "Sek"
+
+  total_energikostnad_vid_inkop:
+    name: "Tibber med avgifter och moms"
+    initial: 0
+    min: 0
+    max: 5
+    step: 0.10
+    mode: box
+    unit_of_measurement: "Sek"
+################################################################################
