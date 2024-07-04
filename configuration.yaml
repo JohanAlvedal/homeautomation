@@ -1,7 +1,7 @@
 #### Start #####################################################################
 # Loads default set of integrations. Do not remove.
 default_config:
-#external_url: "https://6eyp8kgkzcr9zrikgp4974ogtbmcc89t.ui.nabu.casa"
+#external_url: "https://XXXXXXXXXXXXXXXXXX974ogtbmcc89t.ui.nabu.casa"
 ##
 logger:
   default: warn
