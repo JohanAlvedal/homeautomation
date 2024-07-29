@@ -30,7 +30,7 @@ homeassistant:
     lightning: !include packages/lightning.yaml
     emhass: !include packages/emhass.yaml #egen
     emhass_heat: !include packages/emhass_heating.yaml #egen
-    # openhasp: !include packages/plate1.yaml #egen
+    predbat: !include packages/predbat.yaml #egen
 ###
 frontend:
   themes: !include_dir_merge_named themes
