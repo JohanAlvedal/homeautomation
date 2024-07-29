@@ -16,12 +16,14 @@ sensor:
         unit_of_measurement: "W"
         device_class: power
         value_template: "{{ max(0, states('sensor.battery_charge_discharge_power') | float(0)) }}"
+        
       # Sensor som rapporterar urladdningskraften för batteriet
       battery_discharge_only:
         friendly_name: "Battery Discharge Only"
         unit_of_measurement: "W"
         device_class: power
         value_template: "{{ -min(0, states('sensor.battery_charge_discharge_power') | float(0)) }}"
+      
       #Inverter bräkningar
       input_power_with_efficiency_loss:
         friendly_name: "Input Power with Efficiency Loss"
@@ -38,6 +40,7 @@ sensor:
           {% else %}
             {{ inpower * 0.98 }}
           {% endif %}
+      
       # Energy PV
       energy_pv:
         friendly_name: "PV Energy"
@@ -59,8 +62,8 @@ sensor:
           {% set battery_day_discharge = states('sensor.battery_day_discharge') | float(default=0) %}
           {% set battery_day_charge = states('sensor.battery_day_charge') | float(default=0) %}
           {{ inverter_daily_yield - battery_day_discharge + battery_day_charge }}
+      
       # Extra template sensors rör dem inte
-      # Grid to battery
       grid_to_battery:
         unique_id: grid_to_battery
         device_class: power
@@ -70,6 +73,7 @@ sensor:
           {% if inv < 0 %} {{ 0 - inv | int }}
           {% else %} 0
           {% endif %}
+      
       # Grid to house
       grid_to_house:
         unique_id: grid_to_house
@@ -84,6 +88,7 @@ sensor:
             {% endif %}
           {% else %} 0
           {% endif %}
+      
       # Solar to battery
       solar_to_battery:
         unique_id: solar_to_battery
@@ -99,6 +104,7 @@ sensor:
             {% endif %}
           {% else %} 0
           {% endif %}
+      
       # Solar to house
       solar_to_house:
         unique_id: solar_to_house
@@ -120,6 +126,7 @@ sensor:
             {% endif %}
           {% else %} 0
           {% endif %}
+      
       # Solar to grid
       solar_to_grid:
         unique_id: solar_to_grid
@@ -131,6 +138,7 @@ sensor:
           {% if out > 0 and grid > 0 %} {{ grid }}
           {% else %} 0
           {% endif %}
+      
       # Battery to grid
       battery_to_grid:
         unique_id: battery_to_grid
@@ -146,6 +154,7 @@ sensor:
             {% endif %}
           {% else %} 0
           {% endif %}
+      
       # Battery to house
       battery_to_house:
         unique_id: battery_to_house
@@ -157,6 +166,7 @@ sensor:
           {% if bat < 0 %} {{ togrid - bat | int }}
           {% else %} 0
           {% endif %}
+      
       # Batteristatus om charge idle or discharge
       battery_status:
         friendly_name: "Battery Status"
@@ -169,6 +179,7 @@ sensor:
           {% else %}
             Idle
           {% endif %}
+      
       # Husets elförbrukning från Grid #### Data till EMHASS #####
       house_power_from_grid_w:
         unique_id: house_power_from_grid_w
@@ -180,6 +191,7 @@ sensor:
           {% set pv_power = states('sensor.inverter_input_power') | float %}
           {% set grid_power = buy_power - pv_power + battery_charge_discharge_power  %}
           {{ min(0, grid_power) }}
+      
       ########### Power Meter - Calculates the Active Power being consumed in the house from grid, inveters & battery ###########
       # Provides the calculated current load, in Watts, of the house including power being drawn from solar, battery & grid.
       house_consumption_power:
@@ -192,21 +204,25 @@ sensor:
           {% set inverters_power = states('sensor.inverter_active_power') | float(default=0) %}
           {% set power_meter_power = states('sensor.power_meter_active_power') | float(default=0) %}
           {{ max(0, (inverters_power - power_meter_power)) }}
+      
       # Solar power that huse consumes
       solar_power_consumed:
-        friendly_name: Solar power consumed
+        friendly_name: "Solar power consumed"
         unique_id: "solar_power_consumed"
         unit_of_measurement: "W"
         value_template: >
-          {% set house_power = states('sensor.house_power_consumption') | float(default=0) %}
-          {% set inverter_power = states('sensor.inverter_input_power') | float(default=0) %}
+          {% set house_power = states('sensor.house_consumption_power') | float(0) %}
+          {% set inverter_power = states('sensor.inverter_input_power') | float(0) %}
           {% if house_power > inverter_power %}
-            {{ inverter_power | float(default=0) }}
+            {{ inverter_power }}
           {% else %}
-              {{ house_power | float(default=0) }}
+            {{ house_power }}
           {% endif %}
         availability_template: >
-          {{ states('sensor.house_power_consumption') | is_number
-          and states('sensor.inverter_input_power') | is_number }}
-
-#### End #######################################################################
+          {{ states('sensor.house_consumption_power') | is_number and states('sensor.inverter_input_power') | is_number }}
+          
+################################################################################
+#                                                                              #
+#                         END OF PACKAGE FILE                                  #
+#                                                                              #
+################################################################################
