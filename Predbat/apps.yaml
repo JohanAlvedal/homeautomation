@@ -42,7 +42,7 @@ pred_bat:
   export_today:
     - sensor.export_today
   pv_today:
-    - sensor.pv_today
+    - sensor.energy_pv_daily
 
   # Load forecast can be used to add to the historical load data (heat-pump)
   # To link to Predheat
@@ -98,10 +98,26 @@ pred_bat:
   charge_stop_service: huawei_solar/stop_forcible_charge
   discharge_start_service: huawei_solar/forcible_discharge_soc
   discharge_stop_service: huawei_solar/stop_forcible_charge
+  
+#     # Services to charge/discharge
+#   charge_start_service: huawei_solar.forcible_charge_soc
+#   charge_stop_service: huawei_solar.stop_forcible_charge
+#   discharge_start_service: huawei_solar.forcible_discharge_soc
+#   discharge_stop_service: huawei_solar.stop_forcible_charge
+  
+#   # Services to charge/discharge
+#   charge_start_service: 
+#   - huawei_solar/forcible_charge_soc
+#   charge_stop_service: 
+#   - huawei_solar/stop_forcible_charge
+#   discharge_start_service: 
+#   - huawei_solar/forcible_discharge_soc
+#   discharge_stop_service: 
+#   - huawei_solar/stop_forcible_charge
 
   # Device_ID for the Huawei inverter device in home-assistant
-#   device_id: 877400bca09c5e673ff27b201c71d371  # min inverter
-  device_id: 6893ee838a0972bd3e50d9e0faa0ba5a  # mitt batteri
+#   device_id: 877400bca09c5e673ff27b201c71d371  # my inverter
+  device_id: 6893ee838a0972bd3e50d9e0faa0ba5a  # my battery
 
   # Inverter max AC limit (one per inverter). E.g for a 3.6kw inverter set to 3600
   # If you have a second inverter for PV only please add the two values together
