@@ -34,7 +34,7 @@ sensor:
 
       text_el_pris:
         friendly_name: "Text elpris"
-        value_template: "{{ state_attr('sensor.electricity_price_goktytan_4', 'price_level') }}"
+        value_template: "{{ state_attr('sensor.electricity_price_XXXXXXX', 'price_level') }}"
 
       electricity_consumption_price_24h_forecast:
         friendly_name: "Electricity consumption price 24h forecast"
