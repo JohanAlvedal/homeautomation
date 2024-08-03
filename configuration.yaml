@@ -17,12 +17,6 @@ homeassistant:
   allowlist_external_dirs:
     - "/config"
     - "/share"
-## CUSTOMIZE
-#   customize:
-    # sensor.compr_cons_hotwat:
-    #   state_class: total_increasing
-    #   unit_of_measurement: kWh
-    #   device_class: energy
 ## PACKAGES
   packages:
     huawei_solar_data: !include packages/huawei_solar_data.yaml # egen
