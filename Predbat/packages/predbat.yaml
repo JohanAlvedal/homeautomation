@@ -1,4 +1,3 @@
-
 ################################################################################
 #                                                                              #
 #    Predbat package to Huawei inverter with power meter to predbat            #
@@ -53,81 +52,11 @@ utility_meter:
     cycle: daily
     unique_id: "ev_today"
 
-# ### Automations ###   
-# alias: Predbat Carcharger
-# description: ""
-# trigger:
-#   - platform: time_pattern
-#     minutes: /5
-#     id: 5min
-#   - platform: state
-#     entity_id:
-#       - binary_sensor.predbat_car_charging_slot
-#     from: "off"
-#     to: "on"
-#     id: "On"
-#   - platform: state
-#     entity_id:
-#       - binary_sensor.predbat_car_charging_slot
-#     from: "on"
-#     to: "off"
-#     id: "Off"
-#   - platform: zone
-#     entity_id: device_tracker.volvo_yv1xkefv1p2046163_location
-#     zone: zone.home
-#     event: leave
-#     id: Bilen lämmnar
-# condition:
-#   - condition: state
-#     entity_id: automation.emhass_deferrable_load_2_on_off
-#     state: "off"
-# action:
-#   - choose:
-#       - conditions:
-#           - condition: trigger
-#             id:
-#               - 5min
-#               - "On"
-#           - condition: state
-#             entity_id: binary_sensor.predbat_car_charging_slot
-#             state: "on"
-#           - condition: and
-#             conditions:
-#               - condition: state
-#                 entity_id: sensor.volvo_yv1xkefv1p2046163_charging_connection_status
-#                 state: Connected AC
-#               - condition: zone
-#                 entity_id: device_tracker.volvo_yv1xkefv1p2046163_location
-#                 zone: zone.home
-#         sequence:
-#           - type: turn_on
-#             device_id: 92140908f58a2eab84f02310626b5508
-#             entity_id: d2c512143ea2f41b6853d89809eb9c51
-#             domain: switch
-#         alias: "On"
-#       - conditions:
-#           - condition: trigger
-#             id:
-#               - 5min
-#               - "Off"
-#               - Bilen lämmnar
-#           - condition: state
-#             entity_id: binary_sensor.predbat_car_charging_slot
-#             state: "off"
-#         sequence:
-#           - type: turn_off
-#             device_id: 92140908f58a2eab84f02310626b5508
-#             entity_id: d2c512143ea2f41b6853d89809eb9c51
-#             domain: switch
-#         alias: "Off"
-# mode: single
-
-
-# ################################################################################
-# #                                                                              #
-# #                         END OF PACKAGE FILE                                  #
-# #                                                                              #
-# ################################################################################
+ ################################################################################
+ #                                                                              #
+ #                         END OF PACKAGE FILE                                  
+ #                                                                              #
+ ################################################################################
 
 # # {{ ( states('sensor.givtcp_XXX_pv_energy_today_kwh')|float(0)
 # #   + states('sensor.givtcp_XXX_battery_discharge_energy_today_kwh')|float(0)
