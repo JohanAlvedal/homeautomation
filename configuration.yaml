@@ -1,12 +1,12 @@
 #### Start #####################################################################
 # Loads default set of integrations. Do not remove.
 default_config:
-#external_url: "https://XXXXXXXXXXXXXXXXXX974ogtbmcc89t.ui.nabu.casa"
+#external_url: !secret external_url
 ##
-logger:
-  default: warn
-  # logs:
-## EMHASS 
+# logs:
+## API
+api:
+## EMHASS
 notify:
   - platform: file
     name: heating_hours_prediction
@@ -17,15 +17,8 @@ homeassistant:
   allowlist_external_dirs:
     - "/config"
     - "/share"
-## PACKAGES
-  packages:
-    huawei_solar_data: !include packages/huawei_solar_data.yaml # egen
-    elpris_tibber_nordpool: !include packages/elpris_tibber_nordpool.yaml # egen
-    lightning: !include packages/lightning.yaml
-    emhass: !include packages/emhass.yaml #egen
-    emhass_heat: !include packages/emhass_heating.yaml #egen
-    predbat: !include packages/predbat.yaml #egen
-###
+  packages: !include_dir_named packages
+
 frontend:
   themes: !include_dir_merge_named themes
 #### include ###################################################################
@@ -41,5 +34,7 @@ history: !include history.yaml
 device_tracker: !include devicetracker.yaml
 shell_command: !include shell_commands.yaml
 rest_command: !include rest_command.yaml
-template: !include forecast.yaml
+mqtt: !include mqtt.yaml
+#template: !include forecast.yaml
+logger: !include logger.yaml
 #### End #######################################################################
