@@ -16,3 +16,7 @@ Home Assistant: Ensure you have Home Assistant installed and running.
 Nordpool Integration: Set up the Nordpool integration in Home Assistant to get electricity prices.
 Huawei Inverter: Ensure your Huawei inverter is connected to Home Assistant.
 10kW Battery: Verify that your 10kW battery is properly installed and configured.
+
+I'm not an expert in programming, but with the help of google, reading and persistence, I usually solve most things
+
+// Johan
