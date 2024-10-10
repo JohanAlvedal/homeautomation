@@ -1,26 +1,11 @@
 alias: EMHASS Combined Automation
 description: ""
-trigger:
-  - platform: time_pattern
-    minutes: /3
+triggers:
+  - minutes: /3
     id: 3min
     enabled: true
-  - platform: state
-    entity_id:
-      - sensor.limited_power
-    for:
-      hours: 0
-      minutes: 0
-      seconds: 0
-    id: limited_power
-  - platform: state
-    entity_id: sensor.soc_batt_forecast
-    id: Battery SOC Forecast changes
-  - platform: state
-    entity_id: sensor.p_batt_forecast
-    id: Battery Power Forecast changes
-  - platform: state
-    entity_id:
+    trigger: time_pattern
+  - entity_id:
       - sensor.p_batt_forecast
     to: "0"
     for:
@@ -28,15 +13,30 @@ trigger:
       minutes: 0
       seconds: 5
     id: 0W
-  - platform: state
-    entity_id: sensor.soc_comparison
+    trigger: state
+  - entity_id: sensor.soc_comparison
     to: Lika
     for:
       seconds: 5
     id: Lika
     enabled: true
-condition: []
-action:
+    trigger: state
+  - entity_id:
+      - sensor.limited_power
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+    id: limited_power
+    trigger: state
+  - entity_id: sensor.soc_batt_forecast
+    id: Battery SOC Forecast changes
+    trigger: state
+  - entity_id: sensor.p_batt_forecast
+    id: Battery Power Forecast changes
+    trigger: state
+conditions: []
+actions:
   - choose:
       - conditions:
           - condition: trigger
@@ -57,7 +57,8 @@ action:
               new_value | int != old_value | int }}
             enabled: false
         sequence:
-          - if:
+          - alias: 05:00-23:00
+            if:
               - condition: time
                 after: "05:00:00"
                 before: "23:00:00"
@@ -67,30 +68,60 @@ action:
                   target_soc: >-
                     {% set value = states('sensor.soc_batt_forecast') | int(0)
                     %} {{ value if value >= 12 else 12 }}
-                  power: "{{ (states('sensor.limited_power') | int(0) | abs) }}"
+                  power: 5000
                   device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
-              - action: script.emhass_charging_power_2
-                metadata: {}
-                data: {}
               - action: script.emhass_discharging_power_0w
                 data: {}
+              - alias: Limited Power
+                if:
+                  - condition: state
+                    entity_id: input_select.charge_mode
+                    state: Limited Power
+                then:
+                  - action: script.emhass_charging_power_2
+                    metadata: {}
+                    data: {}
+                else:
+                  - action: script.emhass_charging_power_2
+                    data: {}
+              - if:
+                  - condition: state
+                    entity_id: input_select.charge_mode
+                    state: Battery Power Forecast
+                then:
+                  - action: script.emhass_charging_power_battery_power_forecast_2
+                    data: {}
+                alias: Battery power forcast
+              - alias: Fixed
+                if:
+                  - condition: state
+                    entity_id: input_select.charge_mode
+                    state: Fixed
+                then:
+                  - action: script.emhass_charging_power_5200w
+                    data: {}
             else:
               - if:
                   - condition: time
                     after: "23:01:00"
                     before: "04:59:00"
-                then:
-                  - data:
-                      target_soc: >-
-                        {{ max(min(states('sensor.soc_batt_forecast') | int(0),
-                        100), 12) }}
-                      power: "4200"
-                      device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
-                    action: huawei_solar.forcible_charge_soc
-                  - action: script.emhass_charging_power_4200w
-                    metadata: {}
-                    data: {}
+                then: []
                 else: []
+          - alias: 23:00-05:00
+            if:
+              - condition: time
+                after: "23:00:00"
+                before: "05:00:00"
+            then:
+              - action: script.emhass_charging_power_4200w
+                metadata: {}
+                data: {}
+              - data:
+                  target_soc: "{{ max(states('sensor.soc_batt_forecast') | int(0), 12) }}"
+                  power: "5000"
+                  device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+                action: huawei_solar.forcible_charge_soc
+            else: []
         alias: EMHASS (Charge)
       - conditions:
           - condition: trigger
@@ -131,6 +162,7 @@ action:
             id:
               - 3min
               - limited_power
+              - Battery Power Forecast changes
             enabled: true
           - condition: numeric_state
             entity_id: sensor.p_batt_forecast
@@ -144,14 +176,40 @@ action:
             value_template: >-
               {{ states('number.battery_maximum_discharging_power') | int(0) !=
               states('sensor.limited_power') | int(0) | abs }}
-            enabled: true
+            enabled: false
         sequence:
-          - action: script.emhass_discharging_power
-            metadata: {}
-            data: {}
           - action: script.emhass_charging_power
             metadata: {}
             data: {}
+          - if:
+              - condition: state
+                entity_id: input_select.discharge_mode
+                state: Limited Power
+            then:
+              - action: script.emhass_discharging_power
+                metadata: {}
+                data: {}
+                enabled: true
+            alias: Limited Power
+          - if:
+              - condition: state
+                entity_id: input_select.discharge_mode
+                state: Battery Power Forecast
+            then:
+              - action: script.emhass_discharging_power_battery_power_forecast
+                data: {}
+            else: []
+            alias: Batteri Power Forecast
+          - alias: Fixed
+            if:
+              - condition: state
+                entity_id: input_select.discharge_mode
+                state: Fixed
+            then:
+              - action: script.emhass_discharging_power_5000w
+                data: {}
+            else: []
+            enabled: true
         alias: EMHASS (Discharge) Power
       - conditions:
           - condition: trigger
@@ -195,26 +253,5 @@ action:
             metadata: {}
             data: {}
         alias: EMHASS (STOP) power
-      - conditions:
-          - condition: trigger
-            id:
-              - limited_power
-            enabled: false
-        sequence:
-          - if:
-              - condition: state
-                entity_id: sensor.p_batt_forecast_2
-                state: Charging
-            then:
-              - action: script.emhass_discharging_power_0w
-                data: {}
-              - action: script.emhass_charging_power_2
-                metadata: {}
-                data: {}
-            else:
-              - action: script.emhass_charging_power
-                data: {}
-              - action: script.emhass_discharging_power
-                data: {}
 mode: queued
-max: 10 
+max: 10
