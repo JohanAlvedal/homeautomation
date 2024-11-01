@@ -215,7 +215,6 @@ actions:
           - condition: trigger
             id:
               - 0W
-              - Lika
               - 3min
           - condition: state
             entity_id: sensor.soc_comparison
