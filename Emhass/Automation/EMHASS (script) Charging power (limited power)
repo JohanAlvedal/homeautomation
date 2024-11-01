@@ -1,13 +1,12 @@
-alias: EMHASS  Charging power (limited power)
+alias: EMHASS  Discharging power (limited power)
 sequence:
   - condition: template
     value_template: >-
-      {{ states('number.battery_maximum_charging_power') | int(0) !=
+      {{ states('number.battery_maximum_discharging_power') | int(0) !=
       states('sensor.limited_power') | int(0) | abs }}
-    enabled: true
   - data:
       value: "{{ (states('sensor.limited_power') | int(0) | abs) }}"
     target:
-      entity_id: number.battery_maximum_charging_power
+      entity_id: number.battery_maximum_discharging_power
     action: number.set_value
 description: "Perform action 'Number: Set' on Batteries Maximum discharging power"
