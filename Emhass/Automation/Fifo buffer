@@ -1,4 +1,4 @@
-alias: Fifo buffer kwh_read_sensor_data
+alias: Fifo buffer
 description: ""
 triggers:
   - minutes: /30
