@@ -1,4 +1,4 @@
-Welcome to my EMHASS and Predbat setup 
+Welcome to my EMHASS setup 
 
 EMHASS
 EMHASS (Energy Management for Home Assistant) is a tool designed to optimize energy consumption in your smart home. By integrating with Home Assistant, 
