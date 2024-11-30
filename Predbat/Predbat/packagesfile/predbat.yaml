@@ -1,0 +1,87 @@
+################################################################################
+#                                                                              #
+#                   Various predbat sensors                                    #
+#                                                                              #
+#                   Made By Johan71                                            #
+################################################################################
+sensor:
+  - platform: template
+    sensors:
+      pv_power:
+        friendly_name: "PV Power kWh"
+        unit_of_measurement: "kW"
+        unique_id: "pv_power"
+        value_template: >
+          {% set watt = states('sensor.inverter_input_power') | float(0) %}
+          {% if states('sensor.inverter_input_power') not in ['unknown', 'unavailable', 'none'] %}
+            {{ watt / 1000 }}
+          {% else %}
+            0
+          {% endif %}
+
+      ev_today_kwh:
+        friendly_name: "EV Today kWh"
+        unit_of_measurement: "kWh"
+        unique_id: "ev_today_kwh"
+        value_template: >
+          {% set wh = states('sensor.go_echarger_265216_wh') | float(0) %}
+          {% if states('sensor.go_echarger_265216_wh') not in ['unknown', 'unavailable', 'none'] %}
+            {{ wh / 1000 }}
+          {% else %}
+            0
+          {% endif %}
+          
+## set your ev charger from Wh to kwh ##
+      go_echarger_kwh:
+        friendly_name: "Go-eCharger Energy kWh"
+        value_template: >
+          {% set eto = states('sensor.go_echarger_265216_eto') | float(0) %}
+          {% if states('sensor.go_echarger_265216_eto') not in ['unknown', 'unavailable', 'none'] %}
+            {{ eto / 1000 }}
+          {% else %}
+            0
+          {% endif %}
+        unit_of_measurement: "kWh"
+
+  - platform: integration
+    source: sensor.house_consumption_power
+    name: "House Consumption - Energy"
+    unit_prefix: k
+    round: 2
+    unique_id: "house_consumption_energy"
+
+  - platform: integration
+    source: sensor.battery_to_house
+    name: "Battery to House Energy"
+    unit_prefix: k
+    round: 2
+    unique_id: "battery_to_house_energy"
+    
+## Daily sensors ##
+utility_meter:
+  import_today:
+    source: sensor.power_meter_consumption
+    cycle: daily
+    unique_id: "import_today"
+
+  export_today:
+    source: sensor.power_meter_exported
+    cycle: daily
+    unique_id: "export_today"
+
+  pv_today:
+    source: sensor.solar_energy_riemann
+    cycle: daily
+    unique_id: "pv_today"
+
+  load_today:
+    source: sensor.house_consumption_energy
+    cycle: daily
+    unique_id: "load_today"
+
+  ev_today:
+    source: sensor.go_echarger_265216_wh
+    cycle: daily
+    unique_id: "ev_today"
+
+#### END #######################################################################
