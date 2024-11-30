@@ -1,0 +1,43 @@
+alias: Predbat Demand
+description: ""
+triggers:
+  - entity_id:
+      - predbat.status
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+    id: predbat_status_Hold_exporting
+    trigger: state
+    to: Demand
+conditions:
+  - condition: state
+    entity_id: automation.emhass_combined_automation
+    state: "off"
+  - condition: state
+    entity_id: automation.tibber_smartcharge
+    state: "off"
+actions:
+  - alias: Predbat status Demand
+    if:
+      - condition: time
+        after: "23:00:00"
+        before: "05:00:00"
+      - condition: state
+        entity_id: predbat.status
+        state: Demand
+    then:
+      - action: huawei_solar.stop_forcible_charge
+        data:
+          device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+      - action: script.huawei_discharging_power_0w
+        data: {}
+    else:
+      - action: huawei_solar.stop_forcible_charge
+        data:
+          device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+      - action: script.huawei_discharging_power_2500w
+        data: {}
+        enabled: true
+mode: parallel
+max: 10
