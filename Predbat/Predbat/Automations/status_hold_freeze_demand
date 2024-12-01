@@ -1,0 +1,149 @@
+alias: Predbat STOP Freeze Hold Demand
+description: ""
+triggers:
+  - entity_id:
+      - predbat.status
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+    id: Hold charging
+    trigger: state
+    to: Hold charging
+  - entity_id:
+      - predbat.status
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+    id: Freeze charging
+    trigger: state
+    to: Freeze charging
+  - entity_id:
+      - predbat.status
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+    id: Hold exporting
+    trigger: state
+    to: Hold exporting
+  - entity_id:
+      - predbat.status
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+    id: "Freeze exporting "
+    trigger: state
+    to: Freeze exporting
+  - trigger: state
+    entity_id:
+      - predbat.status
+    to: Hold for car
+    id: Hold for Car
+  - trigger: state
+    entity_id:
+      - predbat.status
+    to: Demand
+    id: Demand
+conditions:
+  - condition: not
+    conditions:
+      - condition: state
+        entity_id: binary_sensor.predbat_exporting
+        state: "on"
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id:
+              - "Freeze exporting "
+              - Hold exporting
+              - Hold for Car
+        sequence:
+          - action: huawei_solar.stop_forcible_charge
+            data:
+              device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 5
+              milliseconds: 0
+          - action: script.huawei_charging_power_0w
+            data: {}
+            enabled: true
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 5
+              milliseconds: 0
+          - action: script.huawei_discharging_power_2500w
+            data: {}
+      - conditions:
+          - condition: trigger
+            id:
+              - Freeze charging
+              - Hold charging
+        sequence:
+          - action: huawei_solar.stop_forcible_charge
+            data:
+              device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 5
+              milliseconds: 0
+          - action: script.emhass_discharging_power_0w
+            metadata: {}
+            data: {}
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 5
+              milliseconds: 0
+          - action: script.emhass_charging_power_2500
+            metadata: {}
+            data: {}
+      - conditions:
+          - condition: trigger
+            id:
+              - Demand
+        sequence:
+          - if:
+              - condition: time
+                after: "23:00:00"
+                before: "05:00:00"
+            then:
+              - action: huawei_solar.stop_forcible_charge
+                data:
+                  device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 10
+                  milliseconds: 0
+              - action: script.huawei_discharging_power_0w
+                data: {}
+            else:
+              - action: huawei_solar.stop_forcible_charge
+                data:
+                  device_id: 6893ee838a0972bd3e50d9e0faa0ba5a
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 5
+                  milliseconds: 0
+              - if:
+                  - condition: numeric_state
+                    entity_id: sensor.battery_state_of_capacity
+                    below: 6
+                then:
+                  - action: script.huawei_discharging_power_0w
+                    data: {}
+                else:
+                  - action: script.huawei_discharging_power_2500w
+                    data: {}
+                    enabled: true
+mode: parallel
+max: 10
