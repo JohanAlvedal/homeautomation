@@ -1,0 +1,24 @@
+Summary of Automations
+1. Predbat Charge:
+Manages charging based on time and battery state.
+
+Daytime (06:00–23:30): Charges at 4500W if SOC is 0–97%.
+Nighttime (23:30–06:00): Reduces to 2500W if car charging is active.
+Improvement: Optimize repeated delays and script calls for efficiency.
+
+2. Predbat Discharge:
+Handles battery discharge during exporting.
+
+Discharges at 4500W based on export predictions or SOC.
+Improvement: Simplify conditions and ensure discharging doesn't overlap with other triggers.
+
+3. Predbat STOP, Freeze, Hold, Demand:
+Controls freeze/hold states for charging and exporting.
+
+Adjusts power levels (0W or 2500W) based on triggers and conditions like time or SOC.
+Improvement: Refactor complex "choose" sequences for better readability and maintainability.
+
+Key Adjustments Needed:
+Reduce repeated delays and script executions for performance.
+Improve readability with clearer logic and variable reuse.
+Ensure triggers and actions don't conflict under overlapping conditions.
