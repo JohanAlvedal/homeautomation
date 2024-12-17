@@ -43,6 +43,19 @@ sensor:
           {% endif %}
         unit_of_measurement: "kWh"
 
+      battery_capacity_kw:
+        friendly_name: "Battery State of Capacity in kW"
+        unit_of_measurement: "kW"
+        unique_id: "battery_capacity_kw"
+        value_template: >
+          {% set max_capacity_kw = 10 %}
+          {% set percentage = states('sensor.battery_state_of_capacity') | float(0) %}
+          {% if states('sensor.battery_state_of_capacity') not in ['unknown', 'unavailable', 'none'] %}
+            {{ (max_capacity_kw * percentage / 100) | round(2) }}
+          {% else %}
+            0
+          {% endif %}
+
   - platform: integration
     source: sensor.house_consumption_power
     name: "House Consumption - Energy"
@@ -84,4 +97,4 @@ utility_meter:
     cycle: daily
     unique_id: "ev_today"
 
-#### END #######################################################################
+#### END #############################################
