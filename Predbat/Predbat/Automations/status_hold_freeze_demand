@@ -48,19 +48,40 @@ triggers:
     to: Demand
     id: Demand
 conditions:
-  - condition: not
+  - condition: or
     conditions:
       - condition: state
-        entity_id: binary_sensor.predbat_exporting
-        state: "on"
+        entity_id: predbat.status
+        state: Hold charging
+      - condition: state
+        entity_id: predbat.status
+        state: Demand
+      - condition: state
+        entity_id: predbat.status
+        state: Hold exporting
+      - condition: state
+        entity_id: predbat.status
+        state: Hold for car
+      - condition: state
+        entity_id: predbat.status
+        state: Freeze charging
+      - condition: state
+        entity_id: predbat.status
+        state: Freeze exporting
 actions:
   - choose:
       - conditions:
           - condition: trigger
             id:
+              - Hold for Car
+        sequence:
+          - action: script.huawei_discharging_power_0w
+            data: {}
+      - conditions:
+          - condition: trigger
+            id:
               - "Freeze exporting "
               - Hold exporting
-              - Hold for Car
         sequence:
           - action: huawei_solar.stop_forcible_charge
             data:
@@ -70,9 +91,8 @@ actions:
               minutes: 0
               seconds: 5
               milliseconds: 0
-          - action: script.huawei_charging_power_0w
+          - action: script.emhass_charging_power_2500
             data: {}
-            enabled: true
           - delay:
               hours: 0
               minutes: 0
@@ -94,15 +114,31 @@ actions:
               minutes: 0
               seconds: 5
               milliseconds: 0
-          - action: script.emhass_discharging_power_0w
-            metadata: {}
-            data: {}
-          - delay:
-              hours: 0
-              minutes: 0
-              seconds: 5
-              milliseconds: 0
-          - action: script.emhass_charging_power_2500
+          - if:
+              - condition: numeric_state
+                entity_id: sensor.inverter_input_power
+                below: 1500
+              - condition: or
+                conditions:
+                  - condition: state
+                    entity_id: sensor.season
+                    state: winter
+                  - condition: state
+                    entity_id: sensor.season
+                    state: autumn
+                  - condition: state
+                    entity_id: sensor.season
+                    state: spring
+            then:
+              - action: script.huawei_charging_power_0w
+                metadata: {}
+                data: {}
+            else:
+              - action: script.huawei_charging_power_4500w
+                metadata: {}
+                data: {}
+            enabled: true
+          - action: script.huawei_discharging_power_0w
             metadata: {}
             data: {}
       - conditions:
@@ -113,7 +149,7 @@ actions:
           - if:
               - condition: time
                 after: "23:00:00"
-                before: "05:00:00"
+                before: "06:00:00"
             then:
               - action: huawei_solar.stop_forcible_charge
                 data:
@@ -125,6 +161,13 @@ actions:
                   milliseconds: 0
               - action: script.huawei_discharging_power_0w
                 data: {}
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 5
+                  milliseconds: 0
+              - action: script.huawei_charging_power_0w
+                data: {}
             else:
               - action: huawei_solar.stop_forcible_charge
                 data:
@@ -135,15 +178,32 @@ actions:
                   seconds: 5
                   milliseconds: 0
               - if:
-                  - condition: numeric_state
-                    entity_id: sensor.battery_state_of_capacity
-                    below: 6
+                  - condition: or
+                    conditions:
+                      - condition: numeric_state
+                        entity_id: sensor.battery_state_of_capacity
+                        below: 5
+                      - condition: template
+                        value_template: >
+                          {{ (states('sensor.inverter_input_power') | float) <
+                          (states('sensor.grid_to_house') | float) - 500 }}
+                        enabled: true
                 then:
                   - action: script.huawei_discharging_power_0w
                     data: {}
                 else:
-                  - action: script.huawei_discharging_power_2500w
+                  - action: script.huawei_discharging_power_5000
                     data: {}
-                    enabled: true
+                enabled: false
+              - action: script.huawei_discharging_power_4500w
+                data: {}
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 5
+                  milliseconds: 0
+                enabled: true
+              - action: script.huawei_charging_power_4500w
+                data: {}
 mode: parallel
 max: 10
