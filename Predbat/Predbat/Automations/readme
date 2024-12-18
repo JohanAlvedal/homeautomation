@@ -7,10 +7,34 @@ Nighttime (23:30–06:00): Reduces to 2500W if car charging is active.
 Improvement: Optimize repeated delays and script calls for efficiency.
 
 2. Predbat Discharge:
-Handles battery discharge during exporting.
+The automation **"Predbat Discharge"** manages forced battery discharging for optimal export when specific conditions are met. Here's a summary of its functionality:
 
-Discharges at 4500W based on export predictions or SOC.
-Improvement: Simplify conditions and ensure discharging doesn't overlap with other triggers.
+### **Triggers:**
+- Activated when:
+  1. **`binary_sensor.predbat_exporting`** turns **"on"**.
+  2. The **`predbat.status`** changes to **"Exporting"**.
+  3. A time pattern is matched (every 11 minutes).
+
+### **Conditions:**
+- Proceeds only if:
+  - **`binary_sensor.predbat_exporting`** is **"on"** (exporting is active).
+  - **`binary_sensor.predbat_charging`** is **"off"** (charging is inactive).
+
+### **Actions:**
+- **If `predbat.best_export_limit` is below 12:**  
+  - Forces discharging at **5000W** for 120 seconds via `huawei_solar.forcible_discharge`.  
+  - Runs a script to set discharging power to **5000W** after a 5-second delay.
+
+- **Else (`predbat.best_export_limit` is 12 or above):**  
+  - Sets a target state of charge (`target_soc`) dynamically based on the value of `predbat.best_export_limit` (minimum 12) via `huawei_solar.forcible_discharge_soc`.  
+  - Forces discharging at **5000W**.  
+  - Runs the script to set discharging power to **5000W** after a 5-second delay.
+
+### **Mode:**
+- **Parallel mode:** Allows up to 10 instances of the automation to run simultaneously.
+
+### **Purpose:**
+This automation ensures the battery discharges optimally to export power when exporting is active and charging is inactive. It adjusts the discharge logic based on the `predbat.best_export_limit` to maintain efficient energy export while meeting specific thresholds.
 
 3. Predbat STOP, Freeze, Hold, Demand:
 The automation **"Predbat STOP Freeze Hold Demand"** manages various charging and discharging states for a battery inverter based on the value of the `predbat.status` entity. Here's a summary of its functionality:
