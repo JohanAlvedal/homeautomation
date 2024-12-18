@@ -12,8 +12,9 @@ pred_bat:
   # Timezone to work in
   timezone: Europe/Stockholm
 
-#   # XXX: Template configuration, delete this line once you have set up for your system
-#   template: True
+  # Sets the maximum period of zero load before the gap is filled, default 30 minutes
+  # To disable set it to 1440
+  load_filter_threshold: 30
 
   # Currency, symbol for main currency second symbol for 1/100s e.g. $ c or £ p or e c
   currency_symbols:
@@ -22,7 +23,7 @@ pred_bat:
 
   # Number of threads to use in plan calculation
   # Can be auto for automatic, 0 for off or values 1-N for a fixed number
-  threads: 0
+  threads: auto
 
   # Sensors, more than one can be specified and they will be summed up automatically
   #
@@ -30,7 +31,10 @@ pred_bat:
   # If you have three phase and one inverter per phase then you would need three load sensors
   #
   # For pv_today if you have multiple solar inverter inputs then you should include one entry for each inverter
-  #
+
+  load_forecast_only: True
+  load_forecast:
+    - sensor.load_today_prediction$results 
   load_today:
     - sensor.load_today
   import_today:
@@ -48,16 +52,14 @@ pred_bat:
   #
   num_inverters: 1
   inverter_type: "HU"
-  #
-  # Run balance inverters every N seconds (0=disabled) - only for multi-inverter
-  balance_inverters_seconds: 0
-  #
+
   # If not using REST then instead set the Control here (one for each inverter)
-  # - you can delete this section if using REST
-#   charge_rate:
-#     - number.battery_maximum_charging_power
-#   discharge_rate:
-#     - number.battery_maximum_discharging_power
+  charge_rate:
+    - input_number.predbat_charge  
+    #- number.battery_maximum_charging_power
+  discharge_rate:
+    - input_number.predbat_discharge 
+    #- number.battery_maximum_discharging_power
   battery_power:
     - sensor.battery_charge_discharge_power
   pv_power:
@@ -66,8 +68,8 @@ pred_bat:
     - sensor.power_meter_active_power
   soc_percent:
     - sensor.battery_state_of_capacity
-  #soc_kw:
-  #  - sensor.batteri_to_kw
+#   soc_kw:
+    # - sensor.battery_capacity_kw
   soc_max:
     - 10
   charge_limit:
@@ -78,16 +80,18 @@ pred_bat:
     - off
   scheduled_discharge_enable:
     - off
-  charge_start_time:
-    - "00:00:00"
-  charge_end_time:
-    - "06:00:00"
-  discharge_start_time:
-    - "07:00:00"
-  discharge_end_time:
-    - "23:00:00"
+#   charge_start_time:
+#     - "00:00:00"
+#   charge_end_time:
+#     - "06:00:00"
+#   discharge_start_time:
+#     - "07:00:00"
+#   discharge_end_time:
+#     - "23:00:00"
   battery_min_soc:
     - 5
+  inverter_battery_rate_min:
+    - 0
 
 #   # Services to charge/discharge
 #   charge_start_service: huawei_solar.forcible_charge_soc
@@ -105,7 +109,7 @@ pred_bat:
 
   # Set the maximum charge/discharge rate of the battery
   battery_rate_max:
-   - 3500
+   - 4500
 
   # Export limit is a software limit set on your inverter that prevents exporting above a given level
   # When enabled Predbat will model this limit
@@ -114,35 +118,40 @@ pred_bat:
 
   # Some inverters don't turn off when the rate is set to 0, still charge or discharge at around 200w
   # The value can be set here in watts to model this (doesn't change operation)
-  #inverter_battery_rate_min:
-  #  - 200
+  #inverter_battery_rate_min: 
+  # 60
 
   # Workaround to limit the maximum reserve setting, some inverters won't allow 100% to be set
-  # inverter_reserve_max : 99
+  inverter_reserve_max : 98
 
   # Some batteries tail off their charge rate at high soc%
   # enter the charging curve here as a % of the max charge rate for each soc percentage.
   # the default is 1.0 (full power)
   # The example below is from GE 9.5kwh battery with latest firmware and gen1 inverter
-  #battery_charge_power_curve:
-  #  91 : 0.91
-  #  92 : 0.81
-  #  93 : 0.71
-  #  94 : 0.62
-  #  95 : 0.52
-  #  96 : 0.43
-  #  97 : 0.33
-  #  98 : 0.24
-  #  99 : 0.24
-  #  100 : 0.24
+  battery_charge_power_curve:
+    100 : 0.16
+    99 : 0.16
+    98 : 0.14
+    97 : 0.61
+    96 : 0.76
+    94 : 0.69
+    93 : 0.41
+    92 : 0.42
+    91 : 0.42
+    90 : 0.42
+    89 : 0.42
+    88 : 0.42
+    87 : 0.31
+    86 : 0.31
+    85 : 0.31
 
   # Inverter clock skew in minutes, e.g. 1 means it's 1 minute fast and -1 is 1 minute slow
   # Separate start and end options are applied to the start and end time windows, mostly as you want to start late (not early) and finish early (not late)
   # Separate discharge skew for discharge windows only
-#   inverter_clock_skew_start: 0
-#   inverter_clock_skew_end: 0
-#   inverter_clock_skew_discharge_start: 0
-#   inverter_clock_skew_discharge_end: 0
+  #inverter_clock_skew_start: -1
+  #inverter_clock_skew_end: 0
+  inverter_clock_skew_discharge_start: -1
+  #inverter_clock_skew_discharge_end: 0
 
   # Clock skew adjusts the Appdaemon time
   # This is the time that Predbat takes actions like starting discharge/charging
@@ -157,6 +166,9 @@ pred_bat:
   pv_forecast_tomorrow: re:(sensor.(solcast_|)(pv_forecast_|)forecast_tomorrow)
   pv_forecast_d3: re:(sensor.(solcast_|)(pv_forecast_|)forecast_(day_3|d3))
   pv_forecast_d4: re:(sensor.(solcast_|)(pv_forecast_|)forecast_(day_4|d4))
+  
+  # Carbon Intensity data from National grid
+#   carbon_intensity: 're:(sensor.carbon_intensity_uk)'
 
   # car_charging_energy defines an incrementing sensor which measures the charge added to your car
   # is used for car_charging_hold feature to filter out car charging from the previous load data
@@ -177,26 +189,13 @@ pred_bat:
     - binary_sensor.go_echarger_265216_car
 
   car_charging_planned_response:
-    - 'yes'
     - 'on'
-    - 'true'
-    - 'connected'
-    - 'ev connected'
-    - 'charging'
-    - 'paused'
-    - 'waiting for car demand'
-    - 'waiting for ev'
-    - 'scheduled'
-    - 'enabled'
-    - 'latched'
-    - 'locked'
-    - 'plugged in'
 
   # In some cases car planning is difficult (e.g. Ohme with Intelligent doesn't report slots)
   # The car charging now can be set to a sensor to indicate the car is charging and to plan
   # for it to charge during this 30 minute slot
-#   car_charging_now:
-#     - off
+  car_charging_now:
+    - off
 
   # Positive responses for car_charging_now
   car_charging_now_response:
@@ -210,7 +209,7 @@ pred_bat:
   # Set the car SOC% if you have it to give an accurate forecast of the cars battery levels.
   # One entry per car if you have multiple cars.
   car_charging_battery_size:
-    - 70
+    - 69
   car_charging_limit:
     - input_number.predbat_ev_soc
   car_charging_soc:
@@ -223,42 +222,10 @@ pred_bat:
   # automatically matches your meter number assuming you have only one
   # Will be ignored if you don't have the sensor
   # Or manually set it to the correct sensor names e.g:
-  # sensor.octopus_energy_electricity_xxxxxxxxxx_xxxxxxxxxxxxx_current_rate
-  # sensor.octopus_energy_electricity_xxxxxxxxxx_xxxxxxxxxxxxx_export_current_rate
-  #metric_octopus_import: 're:(sensor.(octopus_energy_|)electricity_[0-9a-z]+_[0-9a-z]+_current_rate)'
-  #metric_octopus_export: 're:(sensor.(octopus_energy_|)electricity_[0-9a-z]+_[0-9a-z]+_export_current_rate)'
   metric_octopus_import: 'sensor.nordpool_tibber'
-  metric_octopus_export: 'sensor.nordpool_tibber'
-
-
-  # Standing charge can be set to a sensor (e.g. Octopus) or manually entered in pounds here (e.g. 0.50 is 50p)
-#  metric_standing_charge: 're:(sensor.(octopus_energy_|)electricity_[0-9a-z]+_[0-9a-z]+_current_standing_charge)'
-
-  # Or set your actual rates across time for import and export
-  # If start/end is missing it's assumed to be a fixed rate
-  # Gaps are filled with zero rate
-  #rates_import:
-  #  -  start: "00:30:00"
-  #     end: "04:30:00"
-  #     rate: 7.5
-  #  -  start: "04:30:00"
-  #     end: "00:30:00"
-  #     rate: 40.0
-  #
-  #   rates_export:
-  #     -  rate: 0
-
-  # Import rates can be overridden with rate_import_override
-  # Export rates can be overridden with rate_export_override
-  # Use the same format as above, but a date can be included if it just applies for a set day (e.g. Octopus power ups)
-  # This will override even the Octopus plugin rates if enabled
-  #
-  #rates_import_override:
-  # -  date: '2023-09-10'
-  #    start: '14:00:00'
-  #    end: '14:30:00'
-  #    rate: 5
-
+  metric_octopus_export: 'sensor.nordpool_kwh_se3_sek_3_10_025'
+  #metric_octopus_export: 'sensor.nordpool_tibber'
+  
   # For pv estimate, leave blank for central estimate, or add 10 for 10% curve (worst case) or 90 or 90% curve (best case)
   # If you use 10 then disable pv_metric10_weight below
   # pv_estimate: 10
@@ -267,13 +234,8 @@ pred_bat:
   # Recommended is 7 to capture day of the week but 1 can also be used
   # if you have more history you could use 7 and 14 (in a list) but the standard data in HA only lasts 10 days
   days_previous:
-    - 2
-    - 3
-    - 4
-    - 5
-    - 6
     - 7
-    - 8
+    - 14
 
   # Days previous weight can be used to control the weighting of the previous load points, the values are multiplied by their
   # weights and then divided through by the total weight. E.g. if you used 1 and 0.5 then the first value would have 2/3rd of the weight and the second 1/3rd
@@ -281,9 +243,10 @@ pred_bat:
   # If any days_previous's that are not given a weighting they will assume a default weighting of 1.
   days_previous_weight:
     - 1
-
+    # - 0.5
+    
   # Number of hours forward to forecast, best left as-is unless you have specific reason
-  forecast_hours: 48
+  forecast_hours: 36
 
   # Specify the devices that notifies are sent to, the default is 'notify' which goes to all
   notify_devices:
@@ -291,7 +254,7 @@ pred_bat:
 
   # Battery scaling makes the battery smaller (e.g. 0.9) or bigger than its reported
   # If you have an 80% DoD battery that falsely reports it's kwh then set it to 0.8 to report the real figures
-  battery_scaling: 1.0
+  battery_scaling: 1
 
   # Can be used to scale import and export data, used for workarounds
   import_export_scaling: 1.0
@@ -314,7 +277,8 @@ pred_bat:
   # It's assumed to be in Kwh but scaling can be applied if need be
   #iboost_energy_today: 'sensor.tasmota_energy_today'
   #iboost_energy_scaling: 1.0 `
-  #################################################################################
+  
+#################################################################################
   
   predheat:
     # Days forward
@@ -335,6 +299,7 @@ pred_bat:
     # Internal temperature sensor(s)
     internal_temperature:
       - sensor.temp_hall_nere_temperature
+      - sensor.atc_fe8e_temperature
 
     # Weather data
     weather: weather.openweathermap
@@ -343,11 +308,11 @@ pred_bat:
     target_temperature: input_number.target_temp
 
     # When true models a smart thermostat that turns the heating ahead of the target temperature so it reaches it just in time
-    smart_thermostat: True
+    smart_thermostat: False
 
     # Past energy consumption of heating in KWh, scaled with heating_energy_scaling
     heating_energy: sensor.daily_heat_in_kwh
-    heating_energy_scaling: 1.4
+    heating_energy_scaling: 1.0
 
     # Heating is turned on history
     heating_active: sensor.heating_status
@@ -366,44 +331,43 @@ pred_bat:
     # https://www.bestheating.com/milano-compact-type-11-single-panel-radiator-multi-sizes-available-74174
     # https://www.bestheating.com/milano-compact-type-22-double-panel-radiator-multi-sizes-available-74176
     # https://www.bestheating.com/milano-compact-type-21-double-panel-plus-radiator-multi-sizes-available-74175
-    heat_output: 17000
+    heat_output: 5000
 
     # Add up radiator volume + any pipework or expansion vessel
     heat_volume: 75
 
     # Heating max power in Watts
-    heat_max_power: 30000
-    heat_min_power: 7000
+    heat_max_power: 6000
+    heat_min_power: 60
 
     # Heating cop is the maximum efficiency and will be scaled down based on temperatures
     # put 1.0 for condensing gas boilers, or around 4.0 for heat pumps
-    heat_cop: 1.0
+    heat_cop: 4.0
 
     # Current flow temperature setting
     flow_temp: sensor.hp_h66_radiator_forward
-    flow_difference_target: 37
-
+    flow_difference_target: 10
 
     # Sets the efficiency of a heat pump in COP at different input temperatures
     heat_pump_efficiency:
-     -20: 2.10
-     -18: 2.15
-     -16: 2.2
-     -14: 2.25
-     -12: 2.3
-     -10: 2.4
-     -8: 2.5
-     -6: 2.6
-     -4: 2.7
-     -2: 2.8
-     0: 2.9
-     2: 3.1
-     4: 3.3
-     6: 3.6
-     8: 3.8
-     10: 3.9
-     12: 4.1
-     14: 4.3
-     16: 4.3
-     18: 4.3
-     20: 4.3
+      -20: 2.10
+      -18: 2.15
+      -16: 2.2
+      -14: 2.25
+      -12: 2.3
+      -10: 2.4
+      -8: 2.5
+      -6: 2.6
+      -4: 2.7
+      -2: 2.8
+      0: 2.9
+      2: 3.1
+      4: 3.3
+      6: 3.6
+      8: 3.8
+      10: 3.9
+      12: 4.1
+      14: 4.3
+      16: 4.3
+      18: 4.3
+      20: 4.3
