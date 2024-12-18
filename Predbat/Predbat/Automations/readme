@@ -1,10 +1,69 @@
 Summary of Automations
 1. Predbat Charge:
-Manages charging based on time and battery state.
+The **"Predbat Charge"** automation governs forced battery charging based on time intervals, charge limits, and specific conditions. Here's a breakdown:
 
-Daytime (06:00–23:30): Charges at 4500W if SOC is 0–97%.
-Nighttime (23:30–06:00): Reduces to 2500W if car charging is active.
-Improvement: Optimize repeated delays and script calls for efficiency.
+---
+
+### **Triggers:**
+- **Battery Charging Active:** Triggered when **`binary_sensor.predbat_charging`** turns **"on"**.
+- **Charge Limit Changes:** Triggered when **`predbat.best_charge_limit`** changes state.
+
+---
+
+### **Conditions:**
+- Ensures that **`binary_sensor.predbat_charging`** is **"on"** before proceeding.
+
+---
+
+### **Actions:**
+The automation handles two distinct time periods:
+
+#### **1. Between 06:00 and 23:30:**
+- **Conditions:**
+  - **`sensor.battery_state_of_capacity`** must be between 0 and 97.
+  - Active triggers include **`Predbat_charging_on`** or **state changes**.
+
+- **If `binary_sensor.predbat_car_charging_slot` is "on":**
+  - Initiates forced charging via `huawei_solar.forcible_charge_soc` with a `target_soc` based on **`predbat.best_charge_limit`** (minimum 12), at **4500W** power.
+  - Executes the **`script.huawei_charging_power_2500w`** after a 5-second delay.
+
+- **Else:**
+  - Forces charging at **5000W** with the same logic for `target_soc`.
+  - Executes **`script.emhass_charging_power_2500`** after a delay.
+
+- **Final Step:**  
+  - Ensures discharging power is set to **0W** via **`script.huawei_discharging_power_0w`**.
+
+---
+
+#### **2. Between 23:30 and 06:00:**
+- **Conditions:**
+  - **`sensor.battery_state_of_capacity`** must be between 0 and 96.
+  - Active triggers include **`Predbat_charging_on`** or **state changes**.
+
+- **If `binary_sensor.predbat_car_charging_slot` is "on":**
+  - Forces charging at **3500W** with a dynamically determined `target_soc`.
+  - Executes **`script.emhass_charging_power_2500`** after a 5-second delay.
+
+- **Else:**
+  - Forces charging at **5000W** with the same logic for `target_soc`.
+  - Executes **`script.huawei_charging_power_5000w`** after a delay.
+
+- **Final Step:**  
+  - Ensures discharging power is set to **0W** via **`script.huawei_discharging_power_0w`**.
+
+---
+
+### **Mode:**
+- **Restart mode:** Ensures the automation restarts when triggered, stopping any current execution.
+
+---
+
+### **Purpose:**
+This automation maintains efficient and optimized battery charging:
+- Adapts charging power and `target_soc` based on time, triggers, and battery state.
+- Prioritizes car charging slots during specific conditions.
+- Aligns with operational hours and prevents overcharging with defined capacity limits.
 
 2. Predbat Discharge:
 The automation **"Predbat Discharge"** manages forced battery discharging for optimal export when specific conditions are met. Here's a summary of its functionality:
